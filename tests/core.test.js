@@ -1,4 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
+import {detectedKeyCount} from '../core.js';
+test('uploaded key question count follows page markers, not empty answers',()=>{assert.equal(detectedKeyCount([{side:1,rows:[]}]),50);assert.equal(detectedKeyCount([{side:2,rows:[]},{side:1,rows:[]}]),100);});
+test('uploaded key count rejects missing or duplicate pages',()=>{for(const results of [[],[{side:2}],[{side:1},{side:1}],[{side:2},{side:2}]])assert.throws(()=>detectedKeyCount(results),/Sheet 1/);});
 import {readyStudents} from '../core.js';
 import {csvExport} from '../exports.js';
 test('complete students export automatically with blank and multiple marks scored zero',async()=>{const b=batch(),p=photo();p.answers[1]=null;p.answers[2]='AB';const ready=readyStudents([p],b);assert.equal(ready.length,1);assert.equal(ready[0].confirmed,false);assert.equal(ready[0].score.score,48);const csv=await csvExport(ready,b).text();assert.match(csv,/Practice Student/);assert.match(csv,/"48","50","96"/);});
