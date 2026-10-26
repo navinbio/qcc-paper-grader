@@ -53,7 +53,7 @@ if(Number($('count').value)!==draft.count||Number($('bonus').value)!==draft.bonu
 const values=reviewedKey(choices(),draft.count,draft.bonus);
 $('key').value=values.key.match(/.{1,10}/g).join(' ');
 if(draft.bonus)$('ec1').value=values.bonusKey[0];if(draft.bonus===2)$('ec2').value=values.bonusKey[1];
-$('keyDialog').close();message('Reviewed answer key applied. Create a new batch when the exam and class are ready.');
+$('key').dispatchEvent(new Event('input',{bubbles:true}));$('keyDialog').close();message('Reviewed answer key applied. Create a new batch when the exam and class are ready.');
 }catch(e){message(e.message,true);$('keyReviewStatus').textContent=e.message;}
 };
 }

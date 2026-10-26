@@ -1,5 +1,13 @@
 export const automatic=r=>r.status==='clear'?r.selected:r.status==='blank'?null:r.status==='multiple'?(r.strong_marks?.join('')||'MULTIPLE'):'pending';
 export function parseKey(raw,count){const key=raw.toUpperCase().replace(/[\s,]+/g,'');if(key.length!==count||/[^ABCDE]/.test(key))throw Error(`Enter exactly ${count} answer letters, A–E.`);return key;}
+export function namedKey(name,count,raw,bonusKey,existing=[]){
+const clean=String(name??'').trim().replace(/\s+/g,' ');
+if(!clean||clean.length>120)throw Error('Give this key a name of 1–120 characters.');
+if(existing.some(k=>String(k.name).trim().replace(/\s+/g,' ').toLowerCase()===clean.toLowerCase()))throw Error('That key name is already saved. Choose a unique name to save a new key.');
+if(![50,100].includes(count))throw Error('Choose 50 or 100 questions.');
+if(typeof bonusKey!=='string'||!/^[ABCDE]{0,2}$/.test(bonusKey))throw Error('Choose one A–E answer for each enabled extra-credit question.');
+return {name:clean,count,key:parseKey(raw,count),bonusKey};
+}
 export function keyFromSheets(results,count,bonusCount){
 if(![50,100].includes(count)||![0,1,2].includes(bonusCount))throw Error('Choose 50 or 100 questions and up to two extra-credit questions.');
 const sides=count===100?[1,2]:[1];
