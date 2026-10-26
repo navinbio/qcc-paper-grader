@@ -1,10 +1,18 @@
 # Exam Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.6.0
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.7.0
 
-This static browser app grades our marker-based printed sheets locally. Photos, rosters, keys and grades stay in IndexedDB in the current device/browser. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
+This static browser app grades our marker-based printed sheets locally. The opening screen offers Log in and Guest mode. Guest keys, photos and grades use temporary memory only; the existing device workspace keeps its rosters, keys and grades in IndexedDB. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
 
-## Four steps
+## Entry and guest mode
+
+Log in explains that professor accounts are coming soon; no credentials are collected. Open this device’s workspace preserves access to the existing local workflow and is explicitly not an authenticated account. Accounts and cross-device sync are still future work.
+
+Guest mode has three steps: Upload key, Capture Grading Sheets and Export. A clearly read key applies immediately without a key name, saved library, roster or confirmation dialog. Only ambiguous/missing key answers need correction. IDs are read from the student sheet without a roster lookup. A one-page unreadable ID exports as Unidentified student with an empty ID; internal grouping identifiers never appear in exports. Two-page exams require readable IDs to pair pages and never guess pairs.
+
+The guest database adapter is an isolated in-memory Map and never opens IndexedDB or requests persistent storage. Refreshing, closing or ending a session loses temporary work. The app warns before an unexported session is left where the browser supports beforeunload; mobile browsers may not show that warning. End guest session confirms clearing and releases temporary records, previews and generated download links. Downloaded files remain with the user. Service-worker caches contain only the app, libraries and blank sheets, not guest photos or grades.
+
+## Saved device workspace: four steps
 
 1. **Choose a Class.** Saved classes appear first; Upload new class roster is the last dropdown choice. Selecting it shows a visible Choose Files control; opening a picker is not attempted from a select-change callback, which mobile browsers can block. Import errors appear beside the roster uploader, and a failed import leaves existing rosters unchanged. Select Excel or CSV rosters containing eight-digit Student ID / OrgDefinedId and Full Name or First Name + Last Name. Text IDs preserve leading zeros; numeric Excel IDs explicitly formatted 00000000 retain padding. Manage classes supports rename, reversible deletion and Undo. Previous exams retain their roster snapshots.
 2. **Answer Key.** Choose key lists saved keys first and Upload new answer key last. Upload a marked instructor key, give it a unique name, and save. The highest marked regular question determines the exam length (1–100); marked EC1/EC2 determine extra credit and its correct answers automatically. Use Sheet 1 for up to 50 and both sheets for 51–100. Leave trailing unused questions blank. Blank gaps inside the key and ambiguous marks require an explicit A–E correction instead of shifting question numbers or silently discarding marks. Clear readings need only a name and Save; extracted answers remain available in a collapsed panel. Student blanks/multiple marks still earn zero. Unused student rows are ignored in grading, review, CSV and PDF annotations. Saved keys and previous exam snapshots retain their settings.
@@ -33,7 +41,7 @@ Run these commands from this directory:
 
 The dependency lock verifies the tested OpenCV 4.x prebuilt, ExcelJS 4.4.0, pdf-lib 1.17.1 and fflate 0.8.2. If upstream bytes change, deployment stops for explicit review. Licenses are in vendor/. The build copies only public source/assets; no rosters, test photos or runtime data are included.
 
-The 29 rule tests cover page validation, automatic question and extra-credit counts, partial-page scoring, automatic export eligibility, blank/multiple scoring, extra credit, ID preservation, missing/duplicate pages, uncertain marks, keys, unique names and homography. Browser checks cover a 50-photo perspective/rotation batch, pause/reload, offline reading, roster import, photo-key extraction, saved-key persistence, class deletion/Undo, automatic exam creation, complete multi-photo ingestion, optional annotated review, matching PDF/CSV exports, and a two-page 100-question combined PDF. Rendered exports were visually checked.
+The 32 rule tests cover page validation, automatic question and extra-credit counts, partial-page scoring, automatic export eligibility, blank/multiple scoring, extra credit, ID preservation, missing/duplicate pages, uncertain marks, keys, unique names and homography. Browser checks cover a 50-photo perspective/rotation batch, pause/reload, offline reading, roster import, photo-key extraction, saved-key persistence, class deletion/Undo, automatic exam creation, complete multi-photo ingestion, optional annotated review, matching PDF/CSV exports, and a two-page 100-question combined PDF. Rendered exports were visually checked.
 
 ## Limits
 
