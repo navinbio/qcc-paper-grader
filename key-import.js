@@ -1,4 +1,4 @@
-import {keyFromSheets,reviewedKey} from './core.js?v=1.2.2';
+import {keyFromSheets,reviewedKey} from './core.js?v=1.3.1';
 
 // Key photos use the same local reader, without requiring a student ID or roster.
 // A key is changed only after all choices are valid and the professor confirms it.
@@ -38,7 +38,7 @@ const status=document.createElement('small');status.textContent=entry.value?'Rea
 select.onchange=()=>{wrap.classList.toggle('flag',!select.value);status.textContent=select.value?'Selected for key':'Choose an answer';update();};
 wrap.append(label,select,status);$('keyChoices').append(wrap);
 }
-$('keyReviewIntro').textContent=`Review ${count} correct answers${bonus?' and '+bonus+' extra-credit answer(s)':''}. Student ID is not needed for an answer-key sheet. This replaces the key for a new batch; saved batches keep their existing keys.`;
+$('keyReviewIntro').textContent=`Review ${count} correct answers${bonus?' and '+bonus+' extra-credit answer(s)':''}. Student ID is not needed for an answer-key sheet. This sets the key for a new exam; previous exams keep their existing keys.`;
 update();$('keyDialog').showModal();message('Answer key read. Review it before applying.');
 }catch(e){clear();message(e.message||'Could not read the answer-key photo. Try a clearer JPEG or PNG.',true);}
 finally{setBusy(false);}
@@ -53,7 +53,7 @@ if(Number($('count').value)!==draft.count||Number($('bonus').value)!==draft.bonu
 const values=reviewedKey(choices(),draft.count,draft.bonus);
 $('key').value=values.key.match(/.{1,10}/g).join(' ');
 if(draft.bonus)$('ec1').value=values.bonusKey[0];if(draft.bonus===2)$('ec2').value=values.bonusKey[1];
-$('key').dispatchEvent(new Event('input',{bubbles:true}));$('keyDialog').close();message('Reviewed answer key applied. Create a new batch when the exam and class are ready.');
+$('keyEditor').open=false;$('key').dispatchEvent(new Event('input',{bubbles:true}));$('keyDialog').close();message('Reviewed answer key applied. Choose the class and add grading-sheet photos when ready.');
 }catch(e){message(e.message,true);$('keyReviewStatus').textContent=e.message;}
 };
 }
