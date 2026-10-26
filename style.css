@@ -36,3 +36,5 @@ td button{min-height:38px;font-size:13px;padding:8px 10px}
 progress{height:10px;accent-color:#205a48}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid #84ad95;outline-offset:3px}
 @media(max-width:600px){main{padding:22px 14px 38px}header{padding:2px 3px 8px}h1{font-size:clamp(39px,11vw,52px);margin-top:20px}.tagline{font-size:17px}.card{padding:22px 18px;margin:16px 0}h2{font-size:20px}.device-status{gap:4px 14px}.print-top a{font-size:16px}}
+
+main>.print-top{margin:4px 2px 16px}main>.print-top+.card{margin-top:0}
