@@ -1,0 +1,7 @@
+site/
+node_modules/
+data/
+*.sqlite3
+*.sqlite3-*
+.DS_Store
+vendor/*.js
