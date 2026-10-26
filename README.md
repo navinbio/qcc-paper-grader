@@ -1,6 +1,6 @@
 # QCC Paper Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.3.2
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.3.3
 
 This static browser app grades our marker-based printed sheets locally. Photos, rosters, keys and grades stay in IndexedDB in the current device/browser. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
 
