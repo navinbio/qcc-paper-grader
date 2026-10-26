@@ -1,9 +1,9 @@
-import {detectedExamSettings,keyFromSheets,reviewedKey} from './core.js?v=1.7.0';
+import {detectedExamSettings,keyFromSheets,reviewedKey} from './core.js?v=1.7.1';
 
 export function setupKeyImport({read,optimize,isGuest=()=>false,isReady,isProcessing,setBusy,message,onSave,onCancel}){
 const $=id=>document.getElementById(id);let draft=null,saving=false;
 const clear=()=>{draft=null;$('keyChoices').replaceChildren();};
-const status=(text,error=false)=>{$('savedKeyStatus').textContent=text;$('savedKeyStatus').className=error?'small error':'small';};
+const status=(text,error=false)=>{$('savedKeyStatus').textContent=text;$('savedKeyStatus').className=error?'small error':text.startsWith('Reading key photo')?'small busy':'small';};
 const choices=()=>[...$('keyChoices').querySelectorAll('select')].map(s=>({question:Number(s.dataset.question),value:s.value}));
 function update(preserveMessage=false){
 const missing=choices().filter(r=>!r.value).length;

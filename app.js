@@ -1,12 +1,15 @@
-import {openDB,memoryDB,get,all,put,remove} from './db.js?v=1.7.0';
-import {automatic,parseKey,groups,importRoster,namedKey,readyStudents,extraAnswersForKey,selectedBonusKey} from './core.js?v=1.7.0';
-import {download,clearDownloads,zipFiles,csvExport,feedbackPDF,combinedPDF} from './exports.js?v=1.7.0';
-import {setupKeyImport} from './key-import.js?v=1.7.0';
+import {openDB,memoryDB,get,all,put,remove} from './db.js?v=1.7.1';
+import {automatic,parseKey,groups,importRoster,namedKey,readyStudents,extraAnswersForKey,selectedBonusKey} from './core.js?v=1.7.1';
+import {download,clearDownloads,zipFiles,csvExport,feedbackPDF,combinedPDF} from './exports.js?v=1.7.1';
+import {setupKeyImport} from './key-import.js?v=1.7.1';
 const $=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+const helpTitles={session:'Session information',print:'Print grading sheets',class:'Choose a class',key:'Answer key',capture:'Capture grading sheets',export:'Export results'};
+for(const button of document.querySelectorAll('[data-help]'))button.onclick=()=>{const topic=button.dataset.help;$('infoTitle').textContent=helpTitles[topic];for(const panel of $('infoDialog').querySelectorAll('[data-info]'))panel.hidden=panel.dataset.info!==topic;$('infoDialog').showModal();};
+$('closeInfo').onclick=()=>$('infoDialog').close();
 let db,state={id:'app',rosters:[],batches:[],keys:[]},batch=null,photos=[],active=null,processing=false,rosterImporting=false,adding=false,paused=false,ready=false,keyBusy=false,keySaving=false,stream=null,retakeId=null,previewURL=null,deletedPhoto=null,activeKeyId='',keyExtraAnswers=['',''],mode=null,guestExported=false,exporting=false,opening=false;
 const worker=new Worker(new URL('./worker.js',import.meta.url));let pending=null;
-worker.onmessage=e=>{if(e.data.ready){ready=true;if(db)render();$('runtime').textContent='Ready to grade on this device.';return;}if(e.data.fatal){$('runtime').textContent='Reader could not load: '+e.data.fatal;return;}if(pending){const p=pending;pending=null;e.data.error?p.reject(Error(e.data.error)):p.resolve(e.data.result);}};
-worker.onerror=e=>{if(pending){pending.reject(Error('The reader stopped. Pause and reload to resume the saved queue.'));pending=null;}ready=false;$('runtime').textContent='Reader stopped. Reload this page to resume safely.';};
+worker.onmessage=e=>{if(e.data.ready){ready=true;if(db)render();$('runtime').className='small';$('runtime').textContent='Ready to grade on this device.';return;}if(e.data.fatal){$('runtime').className='error';$('runtime').textContent='Reader could not load: '+e.data.fatal;return;}if(pending){const p=pending;pending=null;e.data.error?p.reject(Error(e.data.error)):p.resolve(e.data.result);}};
+worker.onerror=e=>{if(pending){pending.reject(Error('The reader stopped. Pause and reload to resume the saved queue.'));pending=null;}ready=false;$('runtime').className='error';$('runtime').textContent='Reader stopped. Reload this page to resume safely.';};
 const read=blob=>new Promise((resolve,reject)=>{if(pending)return reject(Error('The sheet reader is busy. Wait for the current photo.'));pending={resolve,reject};worker.postMessage({id:crypto.randomUUID(),blob});});
 function message(text,error=false){$('message').textContent=text;$('message').className=error?'error':'success';}
 async function save(){await put(db,'state',state);}
@@ -25,14 +28,14 @@ try{const id=$('savedKey').value;
 if(id==='__upload_key__'){$('keyUpload').hidden=false;$('keyName').value='';$('savedKeyStatus').className='small';$('savedKeyStatus').textContent='Choose key photos below. You will name the key after it is read.';return;}
 $('keyUpload').hidden=true;
 const stored=id==='__exam_key__'&&batch?{name:batch.exam,count:batch.count,key:batch.key,bonusKey:batch.bonusKey}:(state.keys||[]).find(k=>k.id===id);
-if(!stored){activeKeyId='';keyExtraAnswers=['',''];$('ec1').value='';$('ec2').value='';$('exam').value='';$('key').value='';settings();$('savedKeyStatus').textContent='Choose a saved key, or upload a new answer key.';return;}
+if(!stored){$('savedKeyStatus').className='small';activeKeyId='';keyExtraAnswers=['',''];$('ec1').value='';$('ec2').value='';$('exam').value='';$('key').value='';settings();$('savedKeyStatus').textContent='Choose a saved key, or upload a new answer key.';return;}
 useKey({...namedKey(stored.name,stored.count,stored.key,stored.bonusKey),extraAnswers:stored.extraAnswers},id);
 }catch(e){$('savedKeyStatus').className='small error';$('savedKeyStatus').textContent=e.message;}
 };
 function cancelKeyUpload(){
 $('keyUpload').hidden=true;$('keyPhotos').value='';
 const previous=state.keys.find(k=>k.id===activeKeyId)||(activeKeyId==='__exam_key__'&&batch?{name:batch.exam,count:batch.count,key:batch.key,bonusKey:batch.bonusKey}:null);
-if(previous)useKey(previous,activeKeyId);else{keyMenu(activeKeyId);$('savedKeyStatus').textContent='Choose a saved key, or upload a new answer key.';settings();}
+if(previous)useKey(previous,activeKeyId);else{keyMenu(activeKeyId);$('savedKeyStatus').className='small';$('savedKeyStatus').textContent='Choose a saved key, or upload a new answer key.';settings();}
 }
 async function saveUploadedKey(name,count,key,bonusKey,extraAnswers){
 const record={...namedKey(mode==='guest'?'Guest exam':name,count,key,bonusKey,mode==='guest'?[]:state.keys||[]),extraAnswers,id:crypto.randomUUID(),created:new Date().toISOString()};
@@ -51,8 +54,9 @@ if(!upload){state.lastRoster=$('roster').value;safe(save);}
 $('cancelRosterUpload').onclick=()=>{$('rosterUpload').hidden=true;$('rosterFiles').value='';$('classStatus').textContent='';rosterMenu(state.lastRoster||batch?.roster.id||'');};
 $('undoClass').onclick=()=>safe(async()=>{const r=state.deletedRosters?.pop();if(r&&!state.rosters.some(x=>x.id===r.id))state.rosters.push(r);await save();rosterMenu(r?.id||'');$('classStatus').textContent='Class restored.';});
 function batchMenu(){const select=$('batchSelect');select.replaceChildren(new Option('Choose a previous exam',''),...state.batches.map(b=>new Option(`${b.exam} · ${b.count} questions · ${new Date(b.created).toLocaleDateString()}`,b.id)));select.value=batch?.id||'';}
-async function selectBatch(id){if(processing)throw Error('Pause processing before switching batches.');batch=state.batches.find(b=>b.id===id)||null;active=null;deletedPhoto=null;$('reviewDialog').close();photos=batch?(await all(db,'photos',id)).filter(p=>p.batchId===id):[];for(const p of photos)if(p.status==='reading'){p.status='pending';await put(db,'photos',p);}state.activeBatch=id;await save();batchMenu();if(batch){keyExtraAnswers=extraAnswersForKey(batch);$('exam').value=batch.exam;$('count').value=String(batch.count);$('key').value=batch.key;$('bonus').value=String(batch.bonusKey.length);$('ec1').value=batch.bonusKey[0]||'';$('ec2').value=batch.bonusKey[1]||'';settings();const saved=(state.keys||[]).find(k=>k.name===batch.exam&&k.key===batch.key&&k.bonusKey===batch.bonusKey);activeKeyId=saved?.id||'__exam_key__';keyMenu(activeKeyId);$('savedKeyStatus').textContent=`Using “${batch.exam}”.`;rosterMenu(batch.roster.id);}render();}
+async function selectBatch(id){if(processing)throw Error('Pause processing before switching batches.');batch=state.batches.find(b=>b.id===id)||null;active=null;deletedPhoto=null;$('reviewDialog').close();photos=batch?(await all(db,'photos',id)).filter(p=>p.batchId===id):[];for(const p of photos)if(p.status==='reading'){p.status='pending';await put(db,'photos',p);}state.activeBatch=id;await save();batchMenu();if(batch){keyExtraAnswers=extraAnswersForKey(batch);$('exam').value=batch.exam;$('count').value=String(batch.count);$('key').value=batch.key;$('bonus').value=String(batch.bonusKey.length);$('ec1').value=batch.bonusKey[0]||'';$('ec2').value=batch.bonusKey[1]||'';settings();const saved=(state.keys||[]).find(k=>k.name===batch.exam&&k.key===batch.key&&k.bonusKey===batch.bonusKey);activeKeyId=saved?.id||'__exam_key__';keyMenu(activeKeyId);$('savedKeyStatus').className='small';$('savedKeyStatus').textContent=`Using “${batch.exam}”.`;rosterMenu(batch.roster.id);}render();}
 function render(){
+$('progress').hidden=!photos.length;$('progressText').hidden=!photos.length;$('photoList').hidden=!photos.length;$('exportStatus').classList.toggle('busy',exporting);
 $('endSession').disabled=processing||adding||keyBusy||exporting;
 
 const included=photos.filter(p=>!p.excluded),done=included.filter(p=>['done','error'].includes(p.status)).length,result=batch?groups(photos,batch):{students:[],issues:[]},graded=result.students.filter(g=>g.ready),attention=result.issues.length+result.students.filter(g=>!g.ready).length;
@@ -82,7 +86,7 @@ await put(db,'photos',photo);photos.splice(Math.min(index,photos.length),0,photo
 async function safe(fn){try{await fn();}catch(e){message(e.message||'Something went wrong. Your saved work is unchanged.',true);}}
 $('rosterFiles').onchange=async()=>{
 const files=[...$('rosterFiles').files];if(!files.length||rosterImporting)return;
-rosterImporting=true;render();$('classStatus').className='small';$('classStatus').textContent='Reading class roster…';
+rosterImporting=true;render();$('classStatus').className='small busy';$('classStatus').textContent='Reading class roster…';
 try{
 const imported=[];for(const file of files)imported.push(...await importRoster(file));
 const next={...state,rosters:[...state.rosters,...imported],lastRoster:imported[0]?.id||''};
@@ -126,8 +130,8 @@ if(opening||mode)return;opening=true;for(const id of ['guestStart','loginStart',
 try{mode=nextMode;guestExported=false;state={id:'app',rosters:[],batches:[],keys:[]};db=mode==='guest'?memoryDB():await openDB();
 if(mode!=='guest')state=await get(db,'state','app')||state;state.keys??=[];
 document.body.classList.toggle('guest-mode',mode==='guest');$('landing').hidden=true;$('workspace').hidden=false;$('deviceStatus').hidden=false;
-$('modeLabel').textContent=mode==='guest'?'Guest mode · temporary session':'This device’s saved workspace';$('endSession').textContent=mode==='guest'?'End guest session':'Back to start';
-keyMenu();rosterMenu();await selectBatch(mode==='guest'?'':state.activeBatch);
+$('modeLabel').textContent=mode==='guest'?'Guest mode':'Saved workspace';$('endSession').textContent=mode==='guest'?'End guest session':'Back to start';
+$('savedKeyStatus').className='small';$('classStatus').className='small';$('classStatus').textContent='';keyMenu();rosterMenu();await selectBatch(mode==='guest'?'':state.activeBatch);
 $('keyUpload').hidden=mode!=='guest';$('keyNameField').hidden=mode==='guest';$('applyKey').textContent=mode==='guest'?'Use key':'Save and use key';$('keyTitle').textContent=mode==='guest'?'Check answer key':'Save new answer key';
 $('keyHeading').textContent=mode==='guest'?'1 · Upload key':'2 · Answer Key';$('captureHeading').textContent=mode==='guest'?'2 · Capture Grading Sheets':'3 · Capture Grading Sheets';$('exportHeading').textContent=mode==='guest'?'3 · Export':'4 · Export';
 $('savedKeyStatus').textContent=mode==='guest'?'Upload your marked instructor key. No name or saving needed.':$('savedKeyStatus').textContent;
@@ -143,7 +147,7 @@ $('localStart').onclick=()=>{$('loginDialog').close();startWorkspace('local');};
 $('endSession').onclick=()=>{if(processing||adding||keyBusy||exporting)return;if(mode==='guest'&&($('key').value||photos.length)){$('endSessionMessage').textContent=guestExported?'End this guest session? Its temporary key, photos and grades will be cleared. Your downloaded files will remain.':'Download your results before leaving. Ending this guest session clears its temporary key, photos and grades.';$('endDialog').showModal();}else endSession();};
 $('keepSession').onclick=()=>$('endDialog').close();$('confirmEnd').onclick=endSession;
 function endSession(){
-if(processing||adding||keyBusy||exporting)return;closeCamera();$('endDialog').close();$('reviewDialog').close();$('keyDialog').close();clearDownloads();
+if(processing||adding||keyBusy||exporting)return;closeCamera();$('infoDialog').close();$('endDialog').close();$('reviewDialog').close();$('keyDialog').close();clearDownloads();
 if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;$('preview').removeAttribute('src');
 if(db?.memory)for(const store of Object.values(db.memory))store.clear();else db?.close();db=null;mode=null;
 state={id:'app',rosters:[],batches:[],keys:[]};batch=null;photos=[];active=null;deletedPhoto=null;retakeId=null;activeKeyId='';keyExtraAnswers=['',''];guestExported=false;
@@ -152,4 +156,4 @@ for(const id of ['photoList','answerReview','keyChoices','summary','message','ke
 $('workspace').hidden=true;$('deviceStatus').hidden=true;$('landing').hidden=false;document.body.classList.remove('guest-mode');$('guestStart').focus();
 }
 window.addEventListener('beforeunload',e=>{if(mode==='guest'&&!guestExported&&($('key').value||photos.length)){e.preventDefault();e.returnValue='';}});
-(async()=>{try{if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.register('./sw.js?v=1.7.0',{updateViaCache:'none'});const check=()=>{const sw=registration.active||registration.waiting;sw?.postMessage({type:'CACHE_STATUS'});};navigator.serviceWorker.addEventListener('message',e=>{if(e.data.type==='OFFLINE_READY')$('offline').textContent='Offline access ready.';if(e.data.type==='OFFLINE_ERROR')$('offline').textContent='Offline files could not be saved. Keep internet available and retry later.';});check();registration.addEventListener('updatefound',()=>registration.installing?.addEventListener('statechange',check));}else $('offline').textContent='Offline installation is not available in this browser.';}catch(e){$('offline').textContent='Offline access is unavailable. Keep internet available.';}})();
+(async()=>{try{if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.register('./sw.js?v=1.7.1',{updateViaCache:'none'});const check=()=>{const sw=registration.active||registration.waiting;sw?.postMessage({type:'CACHE_STATUS'});};navigator.serviceWorker.addEventListener('message',e=>{if(e.data.type==='OFFLINE_READY')$('offline').textContent='Offline access ready.';if(e.data.type==='OFFLINE_ERROR')$('offline').textContent='Offline files could not be saved. Keep internet available and retry later.';});check();registration.addEventListener('updatefound',()=>registration.installing?.addEventListener('statechange',check));}else $('offline').textContent='Offline installation is not available in this browser.';}catch(e){$('offline').textContent='Offline access is unavailable. Keep internet available.';}})();
