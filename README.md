@@ -1,6 +1,6 @@
 # Exam Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.7.1
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.7.2
 
 This static browser app grades our marker-based printed sheets locally. The opening screen offers Log in and Guest mode. Guest keys, photos and grades use temporary memory only; the existing device workspace keeps its rosters, keys and grades in IndexedDB. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
 
@@ -56,3 +56,5 @@ The application is branded Exam Grader, with a large bold title, readable taglin
 Legacy saved keys retain their saved exam settings. To infer a different length or extra-credit configuration from the original marks, upload the instructor key again. Existing exam snapshots remain independent of subsequent library additions.
 
 Routine instructions now live behind circled information buttons beside each section heading, the print link and session label. Help opens a keyboard-accessible dialog with Close and Escape support. Key counts and current exam details are available inside their related help panels. Errors and active reading/export progress remain visible; ordinary success/helper paragraphs and empty queue elements are hidden. Grading results, actions and downloads stay visible.
+
+The key upload control uses an accessible native file input with a custom visible label. Guest mode shows Reading key while processing and Key uploaded only after a usable key is accepted. Resetting the native input to allow reselecting a photo no longer displays a misleading no-files-selected message.
