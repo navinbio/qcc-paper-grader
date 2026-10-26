@@ -1,5 +1,10 @@
 export const automatic=r=>r.status==='clear'?r.selected:r.status==='blank'?null:r.status==='multiple'?(r.strong_marks?.join('')||'MULTIPLE'):'pending';
 export function parseKey(raw,count){const key=raw.toUpperCase().replace(/[\s,]+/g,'');if(key.length!==count||/[^ABCDE]/.test(key))throw Error(`Enter exactly ${count} answer letters, A–E.`);return key;}
+export function detectedKeyCount(results){
+if(results.length===1&&results[0].side===1)return 50;
+if(results.length===2&&results.filter(r=>r.side===1).length===1&&results.filter(r=>r.side===2).length===1)return 100;
+throw Error('For 50 questions, upload Sheet 1. For 100 questions, upload one Sheet 1 and one Sheet 2 together.');
+}
 export function namedKey(name,count,raw,bonusKey,existing=[]){
 const clean=String(name??'').trim().replace(/\s+/g,' ');
 if(!clean||clean.length>120)throw Error('Give this key a name of 1–120 characters.');
