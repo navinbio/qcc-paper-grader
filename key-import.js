@@ -1,4 +1,4 @@
-import {keyFromSheets,reviewedKey} from './core.js?v=1.3.1';
+import {keyFromSheets,reviewedKey} from './core.js?v=1.3.2';
 
 // Key photos use the same local reader, without requiring a student ID or roster.
 // A key is changed only after all choices are valid and the professor confirms it.
