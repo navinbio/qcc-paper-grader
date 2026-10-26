@@ -1,4 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
+import {readyStudents} from '../core.js';
+import {csvExport} from '../exports.js';
+test('complete students export automatically with blank and multiple marks scored zero',async()=>{const b=batch(),p=photo();p.answers[1]=null;p.answers[2]='AB';const ready=readyStudents([p],b);assert.equal(ready.length,1);assert.equal(ready[0].confirmed,false);assert.equal(ready[0].score.score,48);const csv=await csvExport(ready,b).text();assert.match(csv,/Practice Student/);assert.match(csv,/"48","50","96"/);});
+test('automatic export excludes unresolved students while preserving complete ones',()=>{const b=batch(),valid=photo(),uncertain=photo(1,'12345678'),unknown=photo(1,'88888888');b.roster.students['12345678']='Needs attention';uncertain.answers[5]='pending';const ready=readyStudents([unknown,uncertain,valid],b);assert.equal(ready.length,1);assert.equal(ready[0].id,id);assert.equal(readyStudents([photo()],batch(100)).length,0);assert.equal(readyStudents([photo(),photo()],b).length,0);});
 import {namedKey} from '../core.js';
 test('named keys retain full regular and bonus settings with a clean unique name',()=>{const saved=namedKey('  BI 301   exam 1 key  ',100,'abcde '.repeat(20),'CD');assert.deepEqual(saved,{name:'BI 301 exam 1 key',count:100,key:'ABCDE'.repeat(20),bonusKey:'CD'});assert.equal(namedKey('BI 301 exam 2',50,'A'.repeat(50),'').bonusKey,'');});
 test('named keys reject duplicate names without overwriting existing answers',()=>{const existing=[namedKey('BI 301 Exam 1 Key',50,'A'.repeat(50),'E')],before=JSON.stringify(existing);assert.throws(()=>namedKey(' bi 301  exam 1 key ',50,'B'.repeat(50),'C',existing),/already saved/);assert.equal(JSON.stringify(existing),before);});
