@@ -1,4 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
+import {namedKey} from '../core.js';
+test('named keys retain full regular and bonus settings with a clean unique name',()=>{const saved=namedKey('  BI 301   exam 1 key  ',100,'abcde '.repeat(20),'CD');assert.deepEqual(saved,{name:'BI 301 exam 1 key',count:100,key:'ABCDE'.repeat(20),bonusKey:'CD'});assert.equal(namedKey('BI 301 exam 2',50,'A'.repeat(50),'').bonusKey,'');});
+test('named keys reject duplicate names without overwriting existing answers',()=>{const existing=[namedKey('BI 301 Exam 1 Key',50,'A'.repeat(50),'E')],before=JSON.stringify(existing);assert.throws(()=>namedKey(' bi 301  exam 1 key ',50,'B'.repeat(50),'C',existing),/already saved/);assert.equal(JSON.stringify(existing),before);});
+test('named keys require a name, complete regular answers and valid settings',()=>{assert.throws(()=>namedKey(' ',50,'A'.repeat(50),''),/name/);assert.throws(()=>namedKey('x'.repeat(121),50,'A'.repeat(50),''),/name/);assert.throws(()=>namedKey('Exam',50,'A'.repeat(49),''),/exactly 50/);assert.throws(()=>namedKey('Exam',50,'A'.repeat(49)+'?', ''),/A–E/);assert.throws(()=>namedKey('Exam',60,'A'.repeat(60),''),/50 or 100/);assert.throws(()=>namedKey('Exam',50,'A'.repeat(50),'ABC'),/extra-credit/);});
 import {keyFromSheets,reviewedKey} from '../core.js';
 import {automatic,calculate,groups,parseRosterRows,csvRows} from '../core.js';import {homography,project} from '../reader.js';
 const id='01234567';
