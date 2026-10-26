@@ -1,6 +1,6 @@
-# QCC Paper Grader - phone browser edition
+# Exam Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.3.5
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.4.0
 
 This static browser app grades our marker-based printed sheets locally. Photos, rosters, keys and grades stay in IndexedDB in the current device/browser. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
 
@@ -42,3 +42,5 @@ Only our marker-based grading-sheet layouts are supported. Commercial Scantron l
 Photo actions include Review, Retake, Exclude/Include and Delete. Delete removes the photo record, original, corrected image and responses from IndexedDB. Undo delete restores the last deleted photo until a different deletion, exam switch or reload. Exclude keeps the record and leaves it out of grading; Delete removes it from the saved exam and subsequent backups. Deleting a required page blocks that student until it is restored or replaced.
 
 Print blank Grading Sheet is a bold link at the top of the app. It opens the existing two-page 100-bonus blank PDF in a new tab. Print page 1 for a 50-question exam or both pages for 100 questions. Extra-credit bubbles on page 1 are optional and scored only when enabled in the exam key. This print link is independent of the currently selected key.
+
+The application is branded Exam Grader, with a large bold title, readable tagline, quieter status labels and consistent mobile spacing. The existing IndexedDB database name and backup format identifier are intentionally retained so saved exams and older backups remain usable.

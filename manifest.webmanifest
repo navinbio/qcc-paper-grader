@@ -1,9 +1,9 @@
 {
-  "name": "QCC Paper Grader",
-  "short_name": "Paper Grader",
+  "name": "Exam Grader",
+  "short_name": "Exam Grader",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f3f5ef",
+  "background_color": "#f6f8f5",
   "theme_color": "#205a48",
   "icons": [
     {
