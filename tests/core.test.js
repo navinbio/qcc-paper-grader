@@ -1,4 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
+import {extraAnswersForKey,selectedBonusKey} from '../core.js';
+test('extra-credit answers read while disabled can be enabled later without losing positions',()=>{const key={bonusKey:'',extraAnswers:['C','B']};assert.equal(selectedBonusKey(extraAnswersForKey(key),0),'');assert.equal(selectedBonusKey(extraAnswersForKey(key),1),'C');assert.equal(selectedBonusKey(extraAnswersForKey(key),2),'CB');});
+test('older saved keys keep known extra answers and never invent missing ones',()=>{assert.deepEqual(extraAnswersForKey({bonusKey:'D'}),['D','']);assert.throws(()=>selectedBonusKey(extraAnswersForKey({bonusKey:'D'}),2),/Add the correct/);assert.throws(()=>selectedBonusKey(['','B'],2),/Add the correct/);assert.equal(selectedBonusKey(['','B'],0),'');assert.deepEqual(extraAnswersForKey({bonusKey:'',extraAnswers:['AB','E']}),['','E']);});
 import {detectedKeyCount} from '../core.js';
 test('uploaded key question count follows page markers, not empty answers',()=>{assert.equal(detectedKeyCount([{side:1,rows:[]}]),50);assert.equal(detectedKeyCount([{side:2,rows:[]},{side:1,rows:[]}]),100);});
 test('uploaded key count rejects missing or duplicate pages',()=>{for(const results of [[],[{side:2}],[{side:1},{side:1}],[{side:2},{side:2}]])assert.throws(()=>detectedKeyCount(results),/Sheet 1/);});
