@@ -5,6 +5,11 @@ if(results.length===1&&results[0].side===1)return 50;
 if(results.length===2&&results.filter(r=>r.side===1).length===1&&results.filter(r=>r.side===2).length===1)return 100;
 throw Error('For 50 questions, upload Sheet 1. For 100 questions, upload one Sheet 1 and one Sheet 2 together.');
 }
+export function extraAnswersForKey(key){return [0,1].map(i=>{const value=key.extraAnswers?.[i]||key.bonusKey?.[i]||'';return /^[ABCDE]$/.test(value)?value:'';});}
+export function selectedBonusKey(answers,count){
+if(![0,1,2].includes(count)||Array.from({length:count},(_,i)=>answers[i]).some(v=>!/^[ABCDE]$/.test(v||'')))throw Error('Add the correct answer for each selected extra-credit question.');
+return answers.slice(0,count).join('');
+}
 export function namedKey(name,count,raw,bonusKey,existing=[]){
 const clean=String(name??'').trim().replace(/\s+/g,' ');
 if(!clean||clean.length>120)throw Error('Give this key a name of 1–120 characters.');

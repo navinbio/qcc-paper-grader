@@ -1,4 +1,4 @@
-import {detectedKeyCount,keyFromSheets,reviewedKey} from './core.js?v=1.5.0';
+import {detectedKeyCount,keyFromSheets,reviewedKey} from './core.js?v=1.5.1';
 
 export function setupKeyImport({read,optimize,isReady,isProcessing,setBusy,message,onSave,onCancel}){
 const $=id=>document.getElementById(id);let draft=null,saving=false;
@@ -23,7 +23,7 @@ if(files[i].size>30*1024*1024)throw Error('Use key photos smaller than 30 MB.');
 status(`Reading key photo ${i+1} of ${files.length}…`);
 const result=await read(await optimize(files[i]));results.push({side:result.side,rows:result.rows,bonus_rows:result.bonus_rows});
 }
-const count=detectedKeyCount(results),entries=keyFromSheets(results,count,bonus);draft={count,bonus};
+const count=detectedKeyCount(results),entries=keyFromSheets(results,count,bonus),extraAnswers=keyFromSheets(results,count,2).slice(count).map(r=>r.value);draft={count,bonus,extraAnswers};
 for(const entry of entries){
 const wrap=document.createElement('label');wrap.className='key-choice'+(!entry.value?' flag':'');
 const label=document.createElement('strong');label.textContent=entry.label;
@@ -47,7 +47,7 @@ if(saving)return;
 try{
 if(!draft||!$('keyVerified').checked)throw Error('Check the detected key first.');
 const values=reviewedKey(choices(),draft.count,draft.bonus);saving=true;update();$('cancelKey').disabled=true;
-await onSave($('keyName').value,draft.count,values.key,values.bonusKey);
+const extraAnswers=draft.extraAnswers.map((v,i)=>values.bonusKey[i]||v);await onSave($('keyName').value,draft.count,values.key,values.bonusKey,extraAnswers);
 $('keyDialog').close();message('Answer key saved and selected. Add grading sheets when ready.');
 }catch(e){$('keyReviewStatus').textContent=e.message;}
 finally{saving=false;$('cancelKey').disabled=false;if(draft)update(true);}

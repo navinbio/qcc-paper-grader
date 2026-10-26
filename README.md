@@ -1,6 +1,6 @@
 # Exam Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.5.0
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.5.1
 
 This static browser app grades our marker-based printed sheets locally. Photos, rosters, keys and grades stay in IndexedDB in the current device/browser. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
 
@@ -33,7 +33,7 @@ Run these commands from this directory:
 
 The dependency lock verifies the tested OpenCV 4.x prebuilt, ExcelJS 4.4.0, pdf-lib 1.17.1 and fflate 0.8.2. If upstream bytes change, deployment stops for explicit review. Licenses are in vendor/. The build copies only public source/assets; no rosters, test photos or runtime data are included.
 
-The 22 rule tests cover marker-based key counts, automatic export eligibility, blank/multiple scoring, extra credit, ID preservation, missing/duplicate pages, uncertain marks, keys, unique names and homography. Browser checks cover a 50-photo perspective/rotation batch, pause/reload, offline reading, roster import, photo-key extraction, saved-key persistence, class deletion/Undo, automatic exam creation, complete multi-photo ingestion, optional annotated review, matching PDF/CSV exports, and a two-page 100-question combined PDF. Rendered exports were visually checked.
+The 24 rule tests cover marker-based key counts, automatic export eligibility, blank/multiple scoring, extra credit, ID preservation, missing/duplicate pages, uncertain marks, keys, unique names and homography. Browser checks cover a 50-photo perspective/rotation batch, pause/reload, offline reading, roster import, photo-key extraction, saved-key persistence, class deletion/Undo, automatic exam creation, complete multi-photo ingestion, optional annotated review, matching PDF/CSV exports, and a two-page 100-question combined PDF. Rendered exports were visually checked.
 
 ## Limits
 
@@ -44,3 +44,5 @@ Photo actions include Review, Retake, Exclude/Include and Delete. Delete removes
 Print blank Grading Sheet is a bold link below the app heading and directly above the first setup section. It opens the existing two-page 100-bonus blank PDF in a new tab. Print page 1 for a 50-question exam or both pages for 100 questions. Extra-credit bubbles on page 1 are optional and scored only when enabled in the exam key. This print link is independent of the currently selected key.
 
 The application is branded Exam Grader, with a large bold title, readable tagline, quieter status labels and consistent mobile spacing. The existing IndexedDB database name and backup format identifier are intentionally retained so saved exams and older backups remain usable.
+
+Extra-credit keys retain both clearly detected EC answers even when extra credit is disabled at upload. Enabling extra credit later uses those retained answers. Older keys missing required EC answers show Add extra-credit answers only when needed, allowing the professor to complete and save the selected key without uploading it again. Canceling a key upload restores the previous key and its saved extra-credit setting together. Exam snapshots, including any available extra answers, remain independent of subsequent library edits.
