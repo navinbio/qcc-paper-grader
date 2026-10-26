@@ -1,6 +1,6 @@
 # QCC Paper Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.3.4
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.3.5
 
 This static browser app grades our marker-based printed sheets locally. Photos, rosters, keys and grades stay in IndexedDB in the current device/browser. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
 
@@ -40,3 +40,5 @@ The 20 rule tests cover automatic export eligibility, blank/multiple scoring, ex
 Only our marker-based grading-sheet layouts are supported. Commercial Scantron layouts, arbitrary answer lists and PDF key uploads are not recognized by the image reader. Photo formats depend on the browser decoder; use JPEG/PNG when HEIC cannot be opened. Originals are optimized to a 2800-pixel edge and reading uses at most 3200 pixels. One batch is loaded at a time; image resources are released after reading. Combined PDF export retains the resulting PDF in memory; practical class size depends on phone storage and memory. Backup restore is limited to 150 MB compressed / 250 MB expanded. Physical phone camera, pencil/printer variations and low-memory behavior still require testing on the professor's actual device. HTTPS and camera permission are required for capture.
 
 Photo actions include Review, Retake, Exclude/Include and Delete. Delete removes the photo record, original, corrected image and responses from IndexedDB. Undo delete restores the last deleted photo until a different deletion, exam switch or reload. Exclude keeps the record and leaves it out of grading; Delete removes it from the saved exam and subsequent backups. Deleting a required page blocks that student until it is restored or replaced.
+
+Print blank Grading Sheet is a bold link at the top of the app. It opens the existing two-page 100-bonus blank PDF in a new tab. Print page 1 for a 50-question exam or both pages for 100 questions. Extra-credit bubbles on page 1 are optional and scored only when enabled in the exam key. This print link is independent of the currently selected key.

@@ -7,3 +7,5 @@
 details{margin:16px 0}summary{cursor:pointer;font-weight:600;color:#205a48}.class-manage{display:flex;gap:6px;align-items:center;margin:12px 0;flex-wrap:wrap}.class-manage input{min-width:100px;flex:1;margin:0}.review-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}#reviewDialog{max-width:900px}#summary{font-weight:600;margin:12px 0}
 
 .roster-upload{padding:14px;border:1px solid #bfcebf;border-radius:10px;margin:12px 0;background:#f3f7f1}.roster-upload label{margin-top:0}
+
+.print-top{margin:0 0 28px}.print-top a{display:inline-block;color:#205a48;font-size:18px;font-weight:800;text-underline-offset:4px}.print-top strong{font-weight:800}.print-top small{display:block;color:#566c62;margin-top:6px}
