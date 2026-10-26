@@ -1,12 +1,12 @@
 # Exam Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.7.2
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.8.0
 
-This static browser app grades our marker-based printed sheets locally. The opening screen offers Log in and Guest mode. Guest keys, photos and grades use temporary memory only; the existing device workspace keeps its rosters, keys and grades in IndexedDB. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
+This static browser app grades our marker-based printed sheets locally. The opening screen offers My workspace and Guest mode. Guest keys, photos and grades use temporary memory only; the existing device workspace keeps its rosters, keys and grades in IndexedDB. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
 
 ## Entry and guest mode
 
-Log in explains that professor accounts are coming soon; no credentials are collected. Open this device’s workspace preserves access to the existing local workflow and is explicitly not an authenticated account. Accounts and cross-device sync are still future work.
+My workspace opens the existing device workspace directly, without accounts, passwords or biometrics. Stored classes, keys and exams remain in this browser. Guest mode stays temporary.
 
 Guest mode has three steps: Upload key, Capture Grading Sheets and Export. A clearly read key applies immediately without a key name, saved library, roster or confirmation dialog. Only ambiguous/missing key answers need correction. IDs are read from the student sheet without a roster lookup. A one-page unreadable ID exports as Unidentified student with an empty ID; internal grouping identifiers never appear in exports. Two-page exams require readable IDs to pair pages and never guess pairs.
 
@@ -19,7 +19,7 @@ The guest database adapter is an isolated in-memory Map and never opens IndexedD
 3. **Capture Grading Sheets.** The first photo or camera use saves an exam snapshot automatically. Capture repeatedly or select multiple photos, then Grade N sheets. The Grade N sheets button counts included photo sides and updates after capture, selection, exclusion, inclusion and deletion. Grading is disabled until all selected photos finish saving. The worker runs sequentially and checkpoints each photo; pause/reload resumes explicitly. Keep the screen open. Both sides have ID grids and can arrive in any order. Exact duplicates are skipped; competing copies require choosing one. Previous exams and Start a new exam are available in a collapsed section.
 4. **Export.** Complete students become ready automatically. There is no attestation or confirmation step. Download Combined PDF creates one PDF in student-name order, keeping each student's pages together. Download Class CSV includes the same ready students. Unknown/unreadable IDs, uncertain responses, missing pages and duplicate sides block only the affected records. The interface reports graded students and items needing attention. Clear blanks and multiple marks earn zero. Each correct enabled bonus earns one point, with the final score capped at 100%.
 
-Review is optional for complete students: it opens a graded image with name, ID, score, percentage and annotations beside each answer. Original photo and Edit responses are available. Incomplete students show the source sheet and the issue instead of an invented final grade. Downloads always use the latest ready results, including edits. Include correct-answer letters is under More options, along with backup/restore.
+Review is optional for complete students: it opens a graded image with name, ID, score, percentage and annotations beside each answer. Original photo and Edit responses are available. Incomplete students show the source sheet and the issue instead of an invented final grade. Downloads always use the latest ready results, including edits. Include correct-answer letters is under More options, while Download backup and Restore backup are directly available in Export in both modes.
 
 ## Storage and backups
 
@@ -58,3 +58,7 @@ Legacy saved keys retain their saved exam settings. To infer a different length 
 Routine instructions now live behind circled information buttons beside each section heading, the print link and session label. Help opens a keyboard-accessible dialog with Close and Escape support. Key counts and current exam details are available inside their related help panels. Errors and active reading/export progress remain visible; ordinary success/helper paragraphs and empty queue elements are hidden. Grading results, actions and downloads stay visible.
 
 The key upload control uses an accessible native file input with a custom visible label. Guest mode shows Reading key while processing and Key uploaded only after a usable key is accepted. Resetting the native input to allow reselecting a photo no longer displays a misleading no-files-selected message.
+
+Backups now have dated filenames and are available in both modes. They preserve a single exam, its key/roster snapshot, original photos, processed results, pending queue and correct-answer display setting. A restored in-progress photo becomes pending; completed photos keep their results. Download a new backup after more work. Guest restore stays in memory, and adding photos continues the restored exam instead of creating a different one. Restoring in My workspace saves a separate exam and leaves existing exams intact. Guest sessions with photos must be backed up and ended before restoring another file. Backup/restore lock mutations while running.
+
+Browser recovery verification: downloaded a real guest ZIP with one completed and one pending sheet, ended the session, restored into a fresh guest session, finished the pending sheet, and added a third sheet without restarting the exam. Restoring the same archive into My workspace preserved the partial queue through reload and kept earlier exams in history.
