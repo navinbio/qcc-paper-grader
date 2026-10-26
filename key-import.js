@@ -7,7 +7,7 @@ const status=(text,error=false)=>{$('savedKeyStatus').textContent=text;$('savedK
 const choices=()=>[...$('keyChoices').querySelectorAll('select')].map(s=>({question:Number(s.dataset.question),value:s.value}));
 function update(preserveMessage=false){
 const missing=choices().filter(r=>!r.value).length;
-if(preserveMessage!==true)if(preserveMessage!==true)$('keyReviewStatus').textContent=missing?`${missing} answer(s) need a choice before this key can be saved.`:'Check the detected question count and answers, then save your key.';
+if(preserveMessage!==true)$('keyReviewStatus').textContent=missing?`${missing} answer(s) need a choice before this key can be saved.`:'Check the detected question count and answers, then save your key.';
 $('applyKey').disabled=saving||missing>0||!$('keyVerified').checked||!$('keyName').value.trim();
 }
 $('cancelKeyUpload').onclick=onCancel;
