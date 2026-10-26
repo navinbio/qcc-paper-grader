@@ -1,5 +1,24 @@
 export const automatic=r=>r.status==='clear'?r.selected:r.status==='blank'?null:r.status==='multiple'?(r.strong_marks?.join('')||'MULTIPLE'):'pending';
 export function parseKey(raw,count){const key=raw.toUpperCase().replace(/[\s,]+/g,'');if(key.length!==count||/[^ABCDE]/.test(key))throw Error(`Enter exactly ${count} answer letters, A–E.`);return key;}
+export function keyFromSheets(results,count,bonusCount){
+if(![50,100].includes(count)||![0,1,2].includes(bonusCount))throw Error('Choose 50 or 100 questions and up to two extra-credit questions.');
+const sides=count===100?[1,2]:[1];
+if(results.length!==sides.length)throw Error(count===100?'Select one photo of Sheet 1 and one of Sheet 2 together.':'Select one photo of Sheet 1.');
+for(const side of sides)if(results.filter(r=>r.side===side).length!==1)throw Error(`Upload exactly one photo of Sheet ${side}. Check for duplicate or incorrect pages.`);
+const entries=[];
+for(const side of sides){const rows=results.find(r=>r.side===side).rows||[];for(let q=(side-1)*50+1;q<=side*50;q++){
+const matches=rows.filter(r=>r.question===q),r=matches.length===1?matches[0]:null;
+entries.push({question:q,label:'Q'+q,value:r?.status==='clear'&&/^[ABCDE]$/.test(r.selected||'')?r.selected:'',status:r?.status||'unreadable'});
+}}
+const bonus=results.find(r=>r.side===1).bonus_rows||[];
+for(let i=0;i<bonusCount;i++){const matches=bonus.filter(r=>r.question===101+i),r=matches.length===1?matches[0]:null;entries.push({question:101+i,label:'EC'+(i+1),value:r?.status==='clear'&&/^[ABCDE]$/.test(r.selected||'')?r.selected:'',status:r?.status||'unreadable'});}
+return entries;
+}
+export function reviewedKey(entries,count,bonusCount){
+const expected=[...Array.from({length:count},(_,i)=>i+1),...Array.from({length:bonusCount},(_,i)=>101+i)];
+if(entries.length!==expected.length||entries.some((r,i)=>r.question!==expected[i]||!/^[ABCDE]$/.test(r.value||'')))throw Error('Choose one correct answer, A–E, for every question and selected extra-credit question.');
+return {key:entries.slice(0,count).map(r=>r.value).join(''),bonusKey:entries.slice(count).map(r=>r.value).join('')};
+}
 export function calculate(answers,key,bonus,bonusKey){let regular=answers.filter((a,i)=>a===key[i]).length,earned=bonus.filter((a,i)=>a===bonusKey[i]).length,score=Math.min(key.length,regular+earned);return {regular,earned,score,total:key.length,percent:Math.round(1000*score/key.length)/10};}
 export function groups(photos,batch){let byId=new Map(),issues=[];for(const photo of photos.filter(p=>!p.excluded)){if(photo.status!=='done'){issues.push({photo,message:photo.error||'Not processed'});continue;}let r=photo.result,id=r.identity.value;if(r.identity.status!=='clear'||!/^\d{8}$/.test(id||'')){issues.push({photo,message:'Student ID is unreadable. Retake the ID grid; no identity was guessed.'});continue;}const name=batch.roster.students[id];if(!name){issues.push({photo,message:`ID ${id} is not in ${batch.roster.name}. Check the class and ID marks.`});continue;}if(batch.count===50&&r.side===2){issues.push({photo,message:'Sheet 2 is not needed for this 50-question exam.'});continue;}if(!byId.has(id))byId.set(id,{id,name,sides:{},issues:[]});let g=byId.get(id);(g.sides[r.side]??=[]).push(photo);}
 for(const g of byId.values()){for(const side of batch.count===100?[1,2]:[1]){const p=g.sides[side]||[];if(p.length===0)g.issues.push(`Missing Sheet ${side}`);if(p.length>1)g.issues.push(`Duplicate Sheet ${side}: choose the photo to keep`);}g.photos=Object.values(g.sides).flat().sort((a,b)=>a.result.side-b.result.side);g.answers=[];g.bonus=[];for(const p of g.photos){for(const row of p.result.rows)g.answers[row.question-1]=p.answers[row.question];if(p.result.side===1)for(let n=0;n<batch.bonusKey.length;n++){let row=p.result.bonus_rows[n];if(!row){g.issues.push('Extra-credit bubbles are missing. Use the bonus template.');continue;}g.bonus[n]=p.answers[row.question];}}
