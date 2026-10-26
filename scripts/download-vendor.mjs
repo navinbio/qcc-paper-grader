@@ -1,0 +1,4 @@
+import {readFile,mkdir,writeFile} from 'node:fs/promises';import {createHash} from 'node:crypto';
+const lock=JSON.parse(await readFile(new URL('../vendor-lock.json',import.meta.url),'utf8'));
+await mkdir(new URL('../vendor/',import.meta.url),{recursive:true});
+for(const [name,item] of Object.entries(lock)){const destination=new URL('../vendor/'+name,import.meta.url);let bytes;try{bytes=await readFile(destination);}catch{}if(!bytes||createHash('sha256').update(bytes).digest('hex')!==item.sha256){const response=await fetch(item.url);if(!response.ok)throw Error(`Cannot download ${name}: HTTP ${response.status}`);bytes=Buffer.from(await response.arrayBuffer());if(createHash('sha256').update(bytes).digest('hex')!==item.sha256)throw Error(`${name} changed upstream. Review and explicitly update the dependency lock before deploying.`);await writeFile(destination,bytes);}console.log(name+' verified');}
