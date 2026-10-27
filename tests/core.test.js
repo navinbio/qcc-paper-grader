@@ -52,3 +52,12 @@ import {memoryDB,get as dbGet,put as dbPut,all as dbAll,remove as dbRemove} from
 test('guest memory stores never require IndexedDB and new sessions are empty',async()=>{const db=memoryDB(),original={id:'p1',batchId:'g1',original:new Blob(['test']),answers:{1:'A'}};await dbPut(db,'photos',original);original.answers[1]='B';assert.equal((await dbGet(db,'photos','p1')).answers[1],'A');assert.equal((await dbAll(db,'photos','g1')).length,1);assert.equal((await dbAll(db,'photos','other')).length,0);assert.equal((await dbAll(memoryDB(),'photos')).length,0);await dbRemove(db,'photos','p1');assert.equal((await dbAll(db,'photos')).length,0);});
 test('guest grading needs no roster and exports an unreadable ID without invented identifiers',async()=>{const b={...batch(),guest:true,roster:{id:'guest',name:'Guest session',students:{}}},p=photo();p.result.identity={status:'review',value:null};const g=readyStudents([p],b)[0];assert.equal(g.name,'Unidentified student');assert.equal(g.studentId,'');assert.equal(g.score.score,50);const csv=await csvExport([g],b).text();assert.match(csv,/Unidentified student/);assert.ok(!csv.includes('unidentified-'));const identified=readyStudents([photo()],b)[0];assert.equal(identified.studentId,id);});
 test('two-page guests pair readable IDs but never guess pairs with missing IDs',()=>{const b={...batch(100),guest:true,roster:{students:{}}},front=photo(),back=photo(2);assert.equal(readyStudents([back,front],b).length,1);front.result.identity={status:'review',value:null};assert.equal(readyStudents([back,front],b).length,0);assert.match(groups([front,back],b).students.map(g=>g.issues.join()).join(),/readable IDs for pairing/);});
+
+import {selectIdentityLayout} from '../reader.js';
+test('ID orientation follows unique grid markers and retains old sheet compatibility',()=>{
+const old={markers:{840:[],841:[],842:[],843:[]}},columns={markers:{500:[],501:[],502:[],503:[]},height:56},v={identity:old,identityAlternatives:[columns]};
+assert.equal(selectIdentityLayout(v,{500:[]}),columns);
+assert.equal(selectIdentityLayout(v,{840:[]}),old);
+assert.equal(selectIdentityLayout(v,{}),old);
+assert.throws(()=>selectIdentityLayout(v,{500:[],840:[]}),/Different student ID grids/);
+});
