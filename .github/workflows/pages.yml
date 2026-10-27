@@ -20,8 +20,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - run: node --test tests/core.test.js
+          node-version: '24'
+      - run: node --test tests/core.test.js tests/email.test.js
       - run: node scripts/download-vendor.mjs
       - run: node scripts/build.mjs
       - uses: actions/configure-pages@v5
