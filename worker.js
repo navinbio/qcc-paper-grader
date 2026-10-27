@@ -1,4 +1,4 @@
 importScripts('vendor/opencv.js');
-const ready=(async()=>{await new Promise(resolve=>cv.then(()=>resolve()));const runtime=cv;const templates=await fetch('templates.json').then(r=>r.json());const module=await import('./reader.js');return {runtime,templates,read:module.readSheet};})();
+const ready=(async()=>{await new Promise(resolve=>cv.then(()=>resolve()));const runtime=cv;const templates=await fetch('templates.json?v=1.9.0').then(r=>r.json());const module=await import('./reader.js?v=1.9.0');return {runtime,templates,read:module.readSheet};})();
 onmessage=async e=>{try{let {runtime,templates,read}=await ready;if(typeof OffscreenCanvas==='undefined')throw Error('This browser cannot process sheets locally. Update Safari or Chrome and try again.');let result=await read(e.data.blob,runtime,templates);postMessage({id:e.data.id,result});}catch(error){postMessage({id:e.data.id,error:error.message||'Could not read this photo. Use JPEG/PNG and show all markers.'});}};
 ready.then(()=>postMessage({ready:true})).catch(error=>postMessage({fatal:error.message}));

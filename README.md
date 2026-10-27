@@ -1,6 +1,6 @@
 # Exam Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.8.2
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.9.0
 
 This static browser app grades our marker-based printed sheets locally. The opening screen offers My workspace and Guest mode. Guest keys, photos and grades use temporary memory only; the existing device workspace keeps its rosters, keys and grades in IndexedDB. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
 
@@ -66,3 +66,6 @@ Browser recovery verification: downloaded a real guest ZIP with one completed an
 Print blank Grading Sheet now opens an in-app preview, keeping the current guest/saved session intact. A sticky toolbar supplies Back to grader, Print, Share and Download PDF. The print view uses two 300-dpi Letter images derived from the unchanged blank PDF, at 215.9 x 279.4 mm with no app controls on printed pages. Share sends the original PDF through the system file-sharing menu when supported; unsupported browsers show a download fallback. The preview code and images are included in offline caching and deployment. Physical printer output and native iPhone share/print dialogs still depend on the user’s browser and device.
 
 All current Letter templates now have a Student ID writing line on both pages and omit the 1–8 ID row labels. Digit-column labels 0–9, bubble coordinates, marker IDs and question layout are unchanged. A raster comparison confirmed changes were confined to the ID title/line and removed-row-label areas. Preview/PDF URLs include the release query so an older cached blank sheet cannot mask the update. Students still bubble the ID for automatic reading; the written line provides a human-readable reference.
+
+
+Version 1.9.0 adds eight left-to-right ID digit columns with writing boxes and 0–9 rows on both printed pages. Unique ID marker sets retain compatibility with older row-based sheets. Browser regression checks covered both sides, leading-zero IDs, perspective photographs, handwriting in boxes, and double-marked digits; all eight passed. Core checks: 33 passing.
