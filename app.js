@@ -7,7 +7,7 @@ if(file)return;if(loading)return loading;
 loading=(async()=>{
 const images=[...dialog.querySelectorAll('.blank-sheet-page img')];
 await Promise.all(images.map(img=>img.decode()));$('printBlank').disabled=false;
-try{const response=await fetch('./sheets/100-bonus.pdf?v=1.11.0');if(!response.ok)throw Error('PDF unavailable');file=new File([await response.blob()],'Blank_Grading_Sheet.pdf',{type:'application/pdf'});$('shareBlank').disabled=false;}
+try{const response=await fetch('./sheets/100-bonus.pdf?v=1.11.1');if(!response.ok)throw Error('PDF unavailable');file=new File([await response.blob()],'Blank_Grading_Sheet.pdf',{type:'application/pdf'});$('shareBlank').disabled=false;}
 catch{status('The preview is ready. Download PDF needs an internet connection until offline files are ready.',true);}
 })();
 try{await loading;}catch{status('The sheet preview could not load. Reconnect and try again, or use Download PDF.',true);}finally{loading=null;}
@@ -28,18 +28,18 @@ finally{$('shareBlank').disabled=false;}
 
 }
 
-import {createGmailConnector,gmailMessage,gmailDeliveryPlan,loadGoogleIdentity,validGoogleClientId} from './gmail.js?v=1.11.0';
-import {openDB,memoryDB,get,all,put,remove} from './db.js?v=1.11.0';
-import {automatic,parseKey,groups,importRoster,namedKey,readyStudents,extraAnswersForKey,selectedBonusKey} from './core.js?v=1.11.0';
-import {download,clearDownloads,zipFiles,csvExport,feedbackPDF,combinedPDF} from './exports.js?v=1.11.0';
-import {setupKeyImport} from './key-import.js?v=1.11.0';
+import {createGmailConnector,gmailMessage,gmailDeliveryPlan,loadGoogleIdentity,validGoogleClientId} from './gmail.js?v=1.11.1';
+import {openDB,memoryDB,get,all,put,remove} from './db.js?v=1.11.1';
+import {automatic,parseKey,groups,importRoster,namedKey,readyStudents,extraAnswersForKey,selectedBonusKey} from './core.js?v=1.11.1';
+import {download,clearDownloads,zipFiles,csvExport,feedbackPDF,combinedPDF} from './exports.js?v=1.11.1';
+import {setupKeyImport} from './key-import.js?v=1.11.1';
 const $=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const helpTitles={session:'Session information',print:'Print grading sheets',class:'Choose a class',key:'Answer key',capture:'Capture grading sheets',export:'Export results'};
 for(const button of document.querySelectorAll('[data-help]'))button.onclick=()=>{const topic=button.dataset.help;$('infoTitle').textContent=helpTitles[topic];for(const panel of $('infoDialog').querySelectorAll('[data-info]'))panel.hidden=panel.dataset.info!==topic;$('infoDialog').showModal();};
 $('closeInfo').onclick=()=>$('infoDialog').close();
 setupSheetPreview();
 let db,state={id:'app',rosters:[],batches:[],keys:[]},batch=null,photos=[],active=null,processing=false,rosterImporting=false,adding=false,paused=false,ready=false,keyBusy=false,keySaving=false,stream=null,retakeId=null,previewURL=null,deletedPhoto=null,activeKeyId='',keyExtraAnswers=['',''],mode=null,guestExported=false,exporting=false,opening=false,archiving=false,emailing=false;
-const worker=new Worker(new URL('./worker.js?v=1.11.0',import.meta.url));let pending=null;
+const worker=new Worker(new URL('./worker.js?v=1.11.1',import.meta.url));let pending=null;
 worker.onmessage=e=>{if(e.data.ready){ready=true;if(db)render();$('runtime').className='small';$('runtime').textContent='Ready to grade on this device.';return;}if(e.data.fatal){$('runtime').className='error';$('runtime').textContent='Reader could not load: '+e.data.fatal;return;}if(pending){const p=pending;pending=null;e.data.error?p.reject(Error(e.data.error)):p.resolve(e.data.result);}};
 worker.onerror=e=>{if(pending){pending.reject(Error('The reader stopped. Pause and reload to resume the saved queue.'));pending=null;}ready=false;$('runtime').className='error';$('runtime').textContent='Reader stopped. Reload this page to resume safely.';};
 const read=blob=>new Promise((resolve,reject)=>{if(pending)return reject(Error('The sheet reader is busy. Wait for the current photo.'));pending={resolve,reject};worker.postMessage({id:crypto.randomUUID(),blob});});
@@ -195,7 +195,7 @@ for(const id of ['photoList','answerReview','keyChoices','summary','message','ke
 $('workspace').hidden=true;$('deviceStatus').hidden=true;$('landing').hidden=false;document.body.classList.remove('guest-mode');$('guestStart').focus();
 }
 window.addEventListener('beforeunload',e=>{if(mode==='guest'&&!guestExported&&($('key').value||photos.length)){e.preventDefault();e.returnValue='';}});
-(async()=>{try{if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.register('./sw.js?v=1.11.0',{updateViaCache:'none'});const check=()=>{const sw=registration.active||registration.waiting;sw?.postMessage({type:'CACHE_STATUS'});};navigator.serviceWorker.addEventListener('message',e=>{if(e.data.type==='OFFLINE_READY')$('offline').textContent='Offline access ready.';if(e.data.type==='OFFLINE_ERROR')$('offline').textContent='Offline files could not be saved. Keep internet available and retry later.';});check();registration.addEventListener('updatefound',()=>registration.installing?.addEventListener('statechange',check));}else $('offline').textContent='Offline installation is not available in this browser.';}catch(e){$('offline').textContent='Offline access is unavailable. Keep internet available.';}})();
+(async()=>{try{if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.register('./sw.js?v=1.11.1',{updateViaCache:'none'});const check=()=>{const sw=registration.active||registration.waiting;sw?.postMessage({type:'CACHE_STATUS'});};navigator.serviceWorker.addEventListener('message',e=>{if(e.data.type==='OFFLINE_READY')$('offline').textContent='Offline access ready.';if(e.data.type==='OFFLINE_ERROR')$('offline').textContent='Offline files could not be saved. Keep internet available and retry later.';});check();registration.addEventListener('updatefound',()=>registration.installing?.addEventListener('statechange',check));}else $('offline').textContent='Offline installation is not available in this browser.';}catch(e){$('offline').textContent='Offline access is unavailable. Keep internet available.';}})();
 
 const gmail=createGmailConnector();let pendingEmail=null,resumeAfterGmail=false,googleClientId='';
 const emailStatus=(text,error=false)=>{$('emailStatus').textContent=text;$('emailStatus').className=error?'error':'success';};
@@ -204,7 +204,7 @@ async function openGmail(resume=false){
 if(mode!=='local'||emailing)return;resumeAfterGmail=resume;$('gmailDialog').showModal();$('gmailConnect').disabled=true;$('gmailSetupStatus').textContent='Preparing Google connection…';
 try{
 const saved=await get(db,'state','gmail-client-id');if(saved?.clientId)googleClientId=saved.clientId;
-if(!googleClientId){const response=await fetch('./gmail-config.json?v=1.11.0');if(response.ok)googleClientId=(await response.json()).clientId||'';}
+if(!googleClientId){const response=await fetch('./gmail-config.json?v=1.11.1');if(response.ok)googleClientId=(await response.json()).clientId||'';}
 const configured=validGoogleClientId(googleClientId);$('gmailSetupFields').hidden=configured;$('googleClientId').value=configured?googleClientId:'';
 if(!configured){$('gmailSetupStatus').textContent='Google setup is needed once for this app. Add the public OAuth client ID below, or wait for the app owner to configure it.';return;}
 await loadGoogleIdentity();$('gmailConnect').disabled=false;$('gmailSetupStatus').textContent='Ready to connect your Google account.';
