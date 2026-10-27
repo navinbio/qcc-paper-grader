@@ -1,8 +1,8 @@
 # Exam Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.10.0
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.11.0
 
-This static browser app grades our marker-based printed sheets locally. The opening screen offers My workspace and Guest mode. Guest keys, photos and grades use temporary memory only; the existing device workspace keeps its rosters, keys and grades in IndexedDB. Hosting serves the application, verified browser libraries and blank PDFs. No analytics are included. Optional email sends only the confirmed individual PDF and its recipient details to the configured mail service. Email is inactive until that service is deployed and connected. Professor accounts and cross-device synchronization are not implemented.
+This static browser app grades our marker-based printed sheets locally. The opening screen offers My workspace and Guest mode. Guest keys, photos and grades use temporary memory only; the existing device workspace keeps its rosters, keys and grades in IndexedDB. Hosting serves the application, verified browser libraries and blank PDFs. No analytics are included. Optional email sends the confirmed individual PDF and personalized message directly to Gmail. Gmail sending is inactive until the Google client ID is configured and each professor authorizes their own account. No email relay deployment is needed for this route. Professor accounts and cross-device synchronization are not implemented.
 
 ## Entry and guest mode
 
@@ -75,3 +75,6 @@ Version 1.9.1 keeps the blank-sheet Download PDF link on its permanent same-orig
 
 
 Version 1.10.0 adds roster email import and one-button individual graded-sheet submission, with one confirmation. The email service requires a separately deployed, configured sender and authorized device connection; no real email is enabled by default. See mail-service/README.md. Tests: 46 passing; synthetic browser confirmation/cancel/repeat checks passed. No real email was sent.
+
+
+Version 1.11.0 replaces the relay configuration UI with direct Gmail authorization. The public gmail-config.json clientId is blank until the app owner registers the Google project. Each professor authorizes their own Google account with gmail.send plus basic identity scopes; no inbox-read scope is requested. Access tokens remain in memory. Individual MIME messages contain the exact graded PDF and personalized score text. One application confirmation follows connection. Accepted/submitting/unknown delivery states stay with the exam and new backups. Network/5xx uncertainty blocks blind resend; Gmail has no assumed idempotency guarantee. Connect Gmail and Disconnect Gmail are under More options, with automatic connection prompting when email is first used. No real account authorization or email sending was performed during development. 56 tests pass. See Gmail_Setup.md.

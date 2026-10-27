@@ -7,7 +7,7 @@ if(file)return;if(loading)return loading;
 loading=(async()=>{
 const images=[...dialog.querySelectorAll('.blank-sheet-page img')];
 await Promise.all(images.map(img=>img.decode()));$('printBlank').disabled=false;
-try{const response=await fetch('./sheets/100-bonus.pdf?v=1.10.0');if(!response.ok)throw Error('PDF unavailable');file=new File([await response.blob()],'Blank_Grading_Sheet.pdf',{type:'application/pdf'});$('shareBlank').disabled=false;}
+try{const response=await fetch('./sheets/100-bonus.pdf?v=1.11.0');if(!response.ok)throw Error('PDF unavailable');file=new File([await response.blob()],'Blank_Grading_Sheet.pdf',{type:'application/pdf'});$('shareBlank').disabled=false;}
 catch{status('The preview is ready. Download PDF needs an internet connection until offline files are ready.',true);}
 })();
 try{await loading;}catch{status('The sheet preview could not load. Reconnect and try again, or use Download PDF.',true);}finally{loading=null;}
@@ -28,18 +28,18 @@ finally{$('shareBlank').disabled=false;}
 
 }
 
-import {emailPlan,deliveryKey,emailConnection,pdfBase64,sendEmailJob} from './email.js?v=1.10.0';
-import {openDB,memoryDB,get,all,put,remove} from './db.js?v=1.10.0';
-import {automatic,parseKey,groups,importRoster,namedKey,readyStudents,extraAnswersForKey,selectedBonusKey} from './core.js?v=1.10.0';
-import {download,clearDownloads,zipFiles,csvExport,feedbackPDF,combinedPDF} from './exports.js?v=1.10.0';
-import {setupKeyImport} from './key-import.js?v=1.10.0';
+import {createGmailConnector,gmailMessage,gmailDeliveryPlan,loadGoogleIdentity,validGoogleClientId} from './gmail.js?v=1.11.0';
+import {openDB,memoryDB,get,all,put,remove} from './db.js?v=1.11.0';
+import {automatic,parseKey,groups,importRoster,namedKey,readyStudents,extraAnswersForKey,selectedBonusKey} from './core.js?v=1.11.0';
+import {download,clearDownloads,zipFiles,csvExport,feedbackPDF,combinedPDF} from './exports.js?v=1.11.0';
+import {setupKeyImport} from './key-import.js?v=1.11.0';
 const $=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const helpTitles={session:'Session information',print:'Print grading sheets',class:'Choose a class',key:'Answer key',capture:'Capture grading sheets',export:'Export results'};
 for(const button of document.querySelectorAll('[data-help]'))button.onclick=()=>{const topic=button.dataset.help;$('infoTitle').textContent=helpTitles[topic];for(const panel of $('infoDialog').querySelectorAll('[data-info]'))panel.hidden=panel.dataset.info!==topic;$('infoDialog').showModal();};
 $('closeInfo').onclick=()=>$('infoDialog').close();
 setupSheetPreview();
 let db,state={id:'app',rosters:[],batches:[],keys:[]},batch=null,photos=[],active=null,processing=false,rosterImporting=false,adding=false,paused=false,ready=false,keyBusy=false,keySaving=false,stream=null,retakeId=null,previewURL=null,deletedPhoto=null,activeKeyId='',keyExtraAnswers=['',''],mode=null,guestExported=false,exporting=false,opening=false,archiving=false,emailing=false;
-const worker=new Worker(new URL('./worker.js?v=1.10.0',import.meta.url));let pending=null;
+const worker=new Worker(new URL('./worker.js?v=1.11.0',import.meta.url));let pending=null;
 worker.onmessage=e=>{if(e.data.ready){ready=true;if(db)render();$('runtime').className='small';$('runtime').textContent='Ready to grade on this device.';return;}if(e.data.fatal){$('runtime').className='error';$('runtime').textContent='Reader could not load: '+e.data.fatal;return;}if(pending){const p=pending;pending=null;e.data.error?p.reject(Error(e.data.error)):p.resolve(e.data.result);}};
 worker.onerror=e=>{if(pending){pending.reject(Error('The reader stopped. Pause and reload to resume the saved queue.'));pending=null;}ready=false;$('runtime').className='error';$('runtime').textContent='Reader stopped. Reload this page to resume safely.';};
 const read=blob=>new Promise((resolve,reject)=>{if(pending)return reject(Error('The sheet reader is busy. Wait for the current photo.'));pending={resolve,reject};worker.postMessage({id:crypto.randomUUID(),blob});});
@@ -98,7 +98,7 @@ $('progress').max=Math.max(included.length,1);$('progress').value=done;$('progre
 $('summary').textContent=batch?`${graded.length} ${graded.length===1?'student':'students'} graded · ${attention} need attention`:'';
 const table=el('table'),head=el('tr');['Photo','Student','Result','Actions'].forEach(v=>head.append(el('th',v)));table.append(head);
 for(const p of photos){const g=result.students.find(g=>g.photos.some(x=>x.id===p.id)),issue=result.issues.find(x=>x.photo.id===p.id),tr=el('tr');tr.append(el('td',p.name),el('td',g?`${g.name}${batch.guest?'':' · '+g.id} · Sheet ${p.result.side}`:p.result?.identity.value||'—'),el('td',p.excluded?'Excluded':g?.ready?`${g.score.score}/${g.score.total} (${g.score.percent}%)`:issue?.message||g?.issues.join('; ')||p.error||p.status));const td=el('td'),button=(label,fn)=>{const b=el('button',label);b.className='secondary';b.disabled=processing||adding||archiving||emailing;b.onclick=()=>safe(fn);td.append(b);};button('Review',()=>review(p.id));button('Retake',()=>{retakeId=p.id;$('retake').click();});button(p.excluded?'Include':'Exclude',async()=>{p.excluded=!p.excluded;guestExported=false;await put(db,'photos',p);render();});button('Delete',()=>deletePhoto(p.id));if(g?.sides[p.result?.side]?.length>1)button('Keep this copy',async()=>{for(const other of g.sides[p.result.side]){other.excluded=other.id!==p.id;await put(db,'photos',other);}render();});tr.append(td);table.append(tr);}$('photoList').replaceChildren(table);
-$('openCamera').disabled=processing||keyBusy||adding||archiving||emailing;$('process').disabled=!batch||processing||keyBusy||adding||archiving||emailing||!ready||!included.length;$('process').textContent=adding?'Saving sheets…':processing?`Grading ${included.length} ${included.length===1?'sheet':'sheets'}…`:included.length?`Grade ${included.length} ${included.length===1?'sheet':'sheets'}`:'Grade sheets';$('undoPhoto').hidden=!deletedPhoto;$('undoPhoto').disabled=processing||adding;$('pause').hidden=!processing;$('pause').disabled=!processing;$('backup').disabled=!batch||processing||adding||keyBusy||archiving||emailing||exporting;$('backup').textContent=archiving?'Preparing backup…':'Download backup';$('emailStudents').disabled=mode==='guest'||processing||adding||exporting||archiving||emailing||!graded.length;$('emailStudents').textContent=emailing?'Sending graded sheets…':'Email graded sheets to individual students';$('restore').disabled=processing||adding||keyBusy||archiving||emailing||exporting;
+$('openCamera').disabled=processing||keyBusy||adding||archiving||emailing;$('process').disabled=!batch||processing||keyBusy||adding||archiving||emailing||!ready||!included.length;$('process').textContent=adding?'Saving sheets…':processing?`Grading ${included.length} ${included.length===1?'sheet':'sheets'}…`:included.length?`Grade ${included.length} ${included.length===1?'sheet':'sheets'}`:'Grade sheets';$('undoPhoto').hidden=!deletedPhoto;$('undoPhoto').disabled=processing||adding;$('pause').hidden=!processing;$('pause').disabled=!processing;$('backup').disabled=!batch||processing||adding||keyBusy||archiving||emailing||exporting;$('backup').textContent=archiving?'Preparing backup…':'Download backup';$('emailStudents').disabled=mode==='guest'||processing||adding||exporting||archiving||emailing||!graded.length;for(const id of ['manageGmail','disconnectGmail','saveGmailSetup'])$(id).disabled=emailing;$('emailStudents').textContent=emailing?'Sending graded sheets…':'Email graded sheets to individual students';$('restore').disabled=processing||adding||keyBusy||archiving||emailing||exporting;
 for(const id of ['count','bonus'])$(id).disabled=processing||keyBusy||adding||archiving||emailing;$('keyPhotos').disabled=!ready||processing||keyBusy||adding||archiving||emailing||(mode==='guest'&&photos.length>0);$('cancelKeyUpload').disabled=keyBusy;for(const id of ['savedKey','keyName'])$(id).disabled=!db||processing||keyBusy||keySaving||adding||archiving||emailing;
 for(const id of ['exportPdf','exportCsv'])$(id).disabled=processing||adding||exporting||archiving||emailing||!graded.length;
 for(const id of ['photos','batchSelect','roster','newExam','exam'])$(id).disabled=processing||adding||keyBusy||archiving||emailing;
@@ -186,53 +186,74 @@ $('closeWorkspaceError').onclick=()=>$('workspaceErrorDialog').close();
 $('endSession').onclick=()=>{if(processing||adding||keyBusy||exporting||archiving||emailing)return;if(mode==='guest'&&($('key').value||photos.length)){$('endSessionMessage').textContent=guestExported?'End this guest session? Its temporary key, photos and grades will be cleared. Your downloaded files will remain.':'Download your results or a backup before leaving. Ending this guest session clears its temporary key, photos and grades.';$('endDialog').showModal();}else endSession();};
 $('keepSession').onclick=()=>$('endDialog').close();$('confirmEnd').onclick=endSession;
 function endSession(){
-if(processing||adding||keyBusy||exporting||archiving||emailing)return;closeCamera();$('emailDialog').close();$('blankSheetDialog').close();$('infoDialog').close();$('endDialog').close();$('reviewDialog').close();$('keyDialog').close();clearDownloads();
+if(processing||adding||keyBusy||exporting||archiving||emailing)return;closeCamera();gmail.clear();$('gmailDialog').close();$('emailDialog').close();$('blankSheetDialog').close();$('infoDialog').close();$('endDialog').close();$('reviewDialog').close();$('keyDialog').close();clearDownloads();
 if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;$('preview').removeAttribute('src');
 if(db?.memory)for(const store of Object.values(db.memory))store.clear();else db?.close();db=null;mode=null;
 state={id:'app',rosters:[],batches:[],keys:[]};batch=null;photos=[];active=null;deletedPhoto=null;retakeId=null;activeKeyId='';keyExtraAnswers=['',''];guestExported=false;
-for(const id of ['exam','key','ec1','ec2','keyName','keyPhotos','photos','retake','restore','emailServiceURL','emailDeviceCode'])$(id).value='';$('bonus').value='0';$('count').value='50';
-for(const id of ['photoList','answerReview','keyChoices','summary','message','keySummary','batchInfo','downloadLinks','classList','emailStatus','emailConnectionStatus'])$(id).replaceChildren();
+for(const id of ['exam','key','ec1','ec2','keyName','keyPhotos','photos','retake','restore','googleClientId'])$(id).value='';$('bonus').value='0';$('count').value='50';
+for(const id of ['photoList','answerReview','keyChoices','summary','message','keySummary','batchInfo','downloadLinks','classList','emailStatus','gmailConnectionStatus','gmailSetupStatus'])$(id).replaceChildren();
 $('workspace').hidden=true;$('deviceStatus').hidden=true;$('landing').hidden=false;document.body.classList.remove('guest-mode');$('guestStart').focus();
 }
 window.addEventListener('beforeunload',e=>{if(mode==='guest'&&!guestExported&&($('key').value||photos.length)){e.preventDefault();e.returnValue='';}});
-(async()=>{try{if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.register('./sw.js?v=1.10.0',{updateViaCache:'none'});const check=()=>{const sw=registration.active||registration.waiting;sw?.postMessage({type:'CACHE_STATUS'});};navigator.serviceWorker.addEventListener('message',e=>{if(e.data.type==='OFFLINE_READY')$('offline').textContent='Offline access ready.';if(e.data.type==='OFFLINE_ERROR')$('offline').textContent='Offline files could not be saved. Keep internet available and retry later.';});check();registration.addEventListener('updatefound',()=>registration.installing?.addEventListener('statechange',check));}else $('offline').textContent='Offline installation is not available in this browser.';}catch(e){$('offline').textContent='Offline access is unavailable. Keep internet available.';}})();
+(async()=>{try{if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.register('./sw.js?v=1.11.0',{updateViaCache:'none'});const check=()=>{const sw=registration.active||registration.waiting;sw?.postMessage({type:'CACHE_STATUS'});};navigator.serviceWorker.addEventListener('message',e=>{if(e.data.type==='OFFLINE_READY')$('offline').textContent='Offline access ready.';if(e.data.type==='OFFLINE_ERROR')$('offline').textContent='Offline files could not be saved. Keep internet available and retry later.';});check();registration.addEventListener('updatefound',()=>registration.installing?.addEventListener('statechange',check));}else $('offline').textContent='Offline installation is not available in this browser.';}catch(e){$('offline').textContent='Offline access is unavailable. Keep internet available.';}})();
 
-let pendingEmail=null;
+const gmail=createGmailConnector();let pendingEmail=null,resumeAfterGmail=false,googleClientId='';
 const emailStatus=(text,error=false)=>{$('emailStatus').textContent=text;$('emailStatus').className=error?'error':'success';};
-$('saveEmailConnection').onclick=()=>safe(async()=>{
-if(mode!=='local'||emailing)throw Error('Open My workspace to connect email.');
-const connection=emailConnection({url:$('emailServiceURL').value.trim(),token:$('emailDeviceCode').value.trim()});
-await put(db,'state',{id:'email-connection',...connection});$('emailDeviceCode').value='';$('emailConnectionStatus').textContent='Email connection saved for this browser.';
-});
-$('emailStudents').onclick=async()=>{
+function gmailLabels(){const account=gmail.account();$('gmailConnectionStatus').textContent=account?`Gmail: ${account.email}${gmail.connected()?'':' · reconnect to send'}`:'';$('disconnectGmail').hidden=!account;}
+async function openGmail(resume=false){
+if(mode!=='local'||emailing)return;resumeAfterGmail=resume;$('gmailDialog').showModal();$('gmailConnect').disabled=true;$('gmailSetupStatus').textContent='Preparing Google connection…';
+try{
+const saved=await get(db,'state','gmail-client-id');if(saved?.clientId)googleClientId=saved.clientId;
+if(!googleClientId){const response=await fetch('./gmail-config.json?v=1.11.0');if(response.ok)googleClientId=(await response.json()).clientId||'';}
+const configured=validGoogleClientId(googleClientId);$('gmailSetupFields').hidden=configured;$('googleClientId').value=configured?googleClientId:'';
+if(!configured){$('gmailSetupStatus').textContent='Google setup is needed once for this app. Add the public OAuth client ID below, or wait for the app owner to configure it.';return;}
+await loadGoogleIdentity();$('gmailConnect').disabled=false;$('gmailSetupStatus').textContent='Ready to connect your Google account.';
+}catch{$('gmailSetupStatus').textContent='Google sign-in could not load. Connect to the internet and try again in Safari or Chrome.';}
+}
+$('manageGmail').onclick=()=>openGmail(false);
+$('gmailCancel').onclick=()=>{resumeAfterGmail=false;$('gmailDialog').close();};
+$('gmailDialog').addEventListener('cancel',()=>resumeAfterGmail=false);
+$('saveGmailSetup').onclick=async()=>{
+try{const value=$('googleClientId').value.trim();if(!validGoogleClientId(value))throw Error('Enter the public OAuth client ID ending in .apps.googleusercontent.com. Do not enter a client secret.');await put(db,'state',{id:'gmail-client-id',clientId:value});googleClientId=value;await openGmail(resumeAfterGmail);}
+catch(e){$('gmailSetupStatus').textContent=e.message;}
+};
+$('gmailConnect').onclick=()=>{
+if(emailing)return;$('gmailConnect').disabled=true;$('gmailSetupStatus').textContent='Complete the connection in Google’s window.';
+// Keep the authorization call directly on the click event for mobile popup support.
+gmail.connect(googleClientId).then(async account=>{gmailLabels();$('gmailDialog').close();emailStatus('Gmail connected: '+account.email);if(resumeAfterGmail){resumeAfterGmail=false;await prepareGmailEmail();}}).catch(e=>{$('gmailSetupStatus').textContent=e.message;}).finally(()=>{$('gmailConnect').disabled=false;});
+};
+$('disconnectGmail').onclick=()=>{if(emailing)return;gmail.disconnect();gmailLabels();emailStatus('Gmail disconnected. Your saved grading work remains on this device.');};
+async function prepareGmailEmail(){
 try{
 if(!batch||processing||adding||exporting||archiving||emailing)throw Error('Finish grading before sending email.');
-const connection=emailConnection(await get(db,'state','email-connection'));
 if(!navigator.onLine)throw Error('Connect to the internet, then tap the email button. No emails have been submitted.');
-const plan=emailPlan(photos,batch),showAnswers=$('showAnswers').checked,candidates=[];
-let already=0;
-for(const recipient of plan.recipients){const key=await deliveryKey(batch,recipient.group,recipient.to,showAnswers),old=await get(db,'state','mail-'+key);if(old?.status==='accepted'){already++;continue;}candidates.push({...recipient,key,old});}
-if(!candidates.length){emailStatus(already?`All ${already} eligible sheets have already been accepted for email.${plan.skipped.length?' '+plan.skipped.length+' skipped: email missing, invalid or shared.':''}`:plan.skipped.length?'No sheets can be emailed. Add one valid, unique Email address per student in the class roster, then use that roster for grading.':'No matched, complete students are ready to email.',!already);return;}
-pendingEmail={connection,candidates,skipped:plan.skipped.length,already,showAnswers,batchId:batch.id};
-$('emailConfirmSummary').textContent=`${candidates.length} individual graded ${candidates.length===1?'sheet':'sheets'}.${plan.skipped.length?' '+plan.skipped.length+' skipped: email missing, invalid or shared.':''}${already?' '+already+' previously accepted.':''}`;
-$('emailDialog').showModal();
+if(!gmail.connected()){await openGmail(true);return;}
+const account=gmail.account(),showAnswers=$('showAnswers').checked,plan=await gmailDeliveryPlan(photos,batch,account.id,showAnswers);
+const note=`${plan.skipped?' '+plan.skipped+' skipped: email missing, invalid or shared.':''}${plan.accepted?' '+plan.accepted+' previously accepted.':''}${plan.uncertain?' '+plan.uncertain+' uncertain: check Gmail Sent; these will not be resent.':''}`;
+if(!plan.candidates.length){emailStatus((plan.accepted?'All eligible unchanged sheets have already been accepted for email.':plan.uncertain?'Previous email outcomes need checking in Gmail Sent.':'No matched, complete students have a valid, unique email in this exam’s roster.')+note,!plan.accepted||!!plan.uncertain);return;}
+pendingEmail={...plan,account,showAnswers,batchId:batch.id,note};
+$('emailConfirmSummary').textContent=`From ${account.email}. ${plan.candidates.length} individual graded ${plan.candidates.length===1?'sheet':'sheets'}.`+note;$('emailDialog').showModal();
 }catch(e){emailStatus(e.message,true);}
-};
+}
+$('emailStudents').onclick=prepareGmailEmail;
 $('cancelEmail').onclick=()=>{$('emailDialog').close();pendingEmail=null;};
 $('emailDialog').addEventListener('cancel',()=>pendingEmail=null);
 $('confirmEmail').onclick=async()=>{
 const send=pendingEmail;pendingEmail=null;$('emailDialog').close();if(!send||send.batchId!==batch?.id||emailing)return;
+if(!gmail.connected()||gmail.account()?.id!==send.account.id){emailStatus('Reconnect the sending Gmail account, then confirm again.',true);await openGmail(true);return;}
 emailing=true;render();let accepted=0;
 try{
 for(const recipient of send.candidates){
-if(!navigator.onLine)throw Error('Connection lost. Keep this exam saved and tap the email button again when online.');
-emailStatus(`Submitting ${accepted+1} of ${send.candidates.length} graded sheets…`);
-const id='mail-'+recipient.key;let job=recipient.old;
-if(!job){const pdf=pdfBase64(await feedbackPDF(recipient.group,batch,send.showAnswers));job={id,status:'pending',payload:{jobId:recipient.key,to:recipient.to,studentId:recipient.group.id,name:recipient.group.name,exam:batch.exam,pdf}};await put(db,'state',job);}
-const result=await sendEmailJob(send.connection,job.payload);
-await put(db,'state',{id,status:'accepted',providerId:result.id});accepted++;
-if(accepted<send.candidates.length)await new Promise(resolve=>setTimeout(resolve,600));
+if(!navigator.onLine)throw Error('Connection lost. Keep this exam saved and continue when online.');
+if(!gmail.connected())throw Error('Google authorization expired. Reconnect Gmail to continue.');
+emailStatus(`Emailing ${accepted+1} of ${send.candidates.length}: ${recipient.group.name}…`);
+const raw=gmailMessage({from:send.account.email,to:recipient.to,name:recipient.group.name,studentId:recipient.group.id,exam:batch.exam,score:recipient.group.score,pdf:await feedbackPDF(recipient.group,batch,send.showAnswers)});
+batch.gmailDeliveries??={};const record={status:'submitting',to:recipient.to,from:send.account.email,created:new Date().toISOString()};batch.gmailDeliveries[recipient.key]=record;
+await save(); // Checkpoint before submission: a crash must not cause a blind resend.
+let result;try{result=await gmail.send(raw);}catch(e){record.status=e.uncertain?'unknown':'pending';await save();gmailLabels();throw e;}
+record.status='accepted';record.messageId=result.id;await save();accepted++;
+if(accepted<send.candidates.length)await new Promise(resolve=>setTimeout(resolve,1100));
 }
-emailStatus(`${accepted} graded ${accepted===1?'sheet':'sheets'} accepted for email.${send.skipped?' '+send.skipped+' skipped: email missing, invalid or shared.':''}${send.already?' '+send.already+' previously accepted.':''}`);
-}catch(e){emailStatus(`${accepted} accepted in this attempt. `+e.message,true);}finally{emailing=false;render();}
+emailStatus(`${accepted} graded ${accepted===1?'sheet':'sheets'} accepted by Gmail.`+send.note);
+}catch(e){emailStatus(`${accepted} accepted in this attempt. `+e.message,true);}finally{emailing=false;gmailLabels();render();}
 };

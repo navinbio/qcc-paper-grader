@@ -1,1 +1,1 @@
-{"type":"module","scripts":{"test":"node --test tests/core.test.js tests/email.test.js"},"private":true}
+{"type":"module","scripts":{"test":"node --test tests/core.test.js tests/email.test.js tests/gmail.test.js"},"private":true}
