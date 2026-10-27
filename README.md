@@ -1,8 +1,8 @@
 # Exam Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.9.1
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.10.0
 
-This static browser app grades our marker-based printed sheets locally. The opening screen offers My workspace and Guest mode. Guest keys, photos and grades use temporary memory only; the existing device workspace keeps its rosters, keys and grades in IndexedDB. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
+This static browser app grades our marker-based printed sheets locally. The opening screen offers My workspace and Guest mode. Guest keys, photos and grades use temporary memory only; the existing device workspace keeps its rosters, keys and grades in IndexedDB. Hosting serves the application, verified browser libraries and blank PDFs. No analytics are included. Optional email sends only the confirmed individual PDF and its recipient details to the configured mail service. Email is inactive until that service is deployed and connected. Professor accounts and cross-device synchronization are not implemented.
 
 ## Entry and guest mode
 
