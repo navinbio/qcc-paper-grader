@@ -1,0 +1,11 @@
+{
+  "name": "exam-grader-mail",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-26",
+  "vars": {
+    "ALLOWED_ORIGINS": "https://navinbio.github.io",
+    "FROM_ADDRESS": "Exam Grader <grades@YOUR-VERIFIED-DOMAIN>"
+  },
+  "d1_databases": [{"binding":"DB","database_name":"exam-grader-mail","database_id":"REPLACE_WITH_DATABASE_ID"}],
+  "observability": {"enabled":false}
+}

@@ -1,0 +1,12 @@
+import {randomBytes,randomUUID,createHash} from 'node:crypto';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {emailConnection,validEmail} from '../email.js';
+const [url,replyTo,output]=process.argv.slice(2);
+if(!url||!validEmail(replyTo)||!output)throw Error('Usage: node provision-device.mjs https://YOUR-WORKER.workers.dev professor@example.edu PRIVATE_OUTPUT_FOLDER');
+const connection=emailConnection({url,token:'eg_'+randomBytes(32).toString('base64url')}),id=randomUUID(),hash=createHash('sha256').update(connection.token).digest('hex'),folder=resolve(output);
+await mkdir(folder,{recursive:true});
+await writeFile(resolve(folder,'email-connection.private.json'),JSON.stringify(connection,null,2),{flag:'wx',mode:0o600});
+const quote=s=>"'"+s.replaceAll("'","''")+"'";
+await writeFile(resolve(folder,'register-device.sql'),`INSERT INTO devices (id, token_hash, reply_to) VALUES (${quote(id)},${quote(hash)},${quote(replyTo)});\n`,{flag:'wx',mode:0o600});
+console.log('Created private connection file and device registration SQL. Keep the connection file out of GitHub. Device ID: '+id);
