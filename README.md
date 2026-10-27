@@ -1,6 +1,6 @@
 # Exam Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.9.0
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.9.1
 
 This static browser app grades our marker-based printed sheets locally. The opening screen offers My workspace and Guest mode. Guest keys, photos and grades use temporary memory only; the existing device workspace keeps its rosters, keys and grades in IndexedDB. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
 
@@ -68,4 +68,7 @@ Print blank Grading Sheet now opens an in-app preview, keeping the current guest
 All current Letter templates now have a Student ID writing line on both pages and omit the 1–8 ID row labels. Digit-column labels 0–9, bubble coordinates, marker IDs and question layout are unchanged. A raster comparison confirmed changes were confined to the ID title/line and removed-row-label areas. Preview/PDF URLs include the release query so an older cached blank sheet cannot mask the update. Students still bubble the ID for automatic reading; the written line provides a human-readable reference.
 
 
-Version 1.9.0 adds eight left-to-right ID digit columns with writing boxes and 0–9 rows on both printed pages. Unique ID marker sets retain compatibility with older row-based sheets. Browser regression checks covered both sides, leading-zero IDs, perspective photographs, handwriting in boxes, and double-marked digits; all eight passed. Core checks: 33 passing.
+Version 1.9.1 adds eight left-to-right ID digit columns with writing boxes and 0–9 rows on both printed pages. Unique ID marker sets retain compatibility with older row-based sheets. Browser regression checks covered both sides, leading-zero IDs, perspective photographs, handwriting in boxes, and double-marked digits; all eight passed. Core checks: 33 passing.
+
+
+Version 1.9.1 keeps the blank-sheet Download PDF link on its permanent same-origin PDF address. It no longer replaces the link with a temporary object URL or revokes it when Safari leaves the page. Sharing still uses the prepared PDF file.
