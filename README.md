@@ -1,6 +1,6 @@
 # Exam Grader - phone browser edition
 
-Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.8.0
+Public app: https://navinbio.github.io/qcc-paper-grader/?v=1.8.1
 
 This static browser app grades our marker-based printed sheets locally. The opening screen offers My workspace and Guest mode. Guest keys, photos and grades use temporary memory only; the existing device workspace keeps its rosters, keys and grades in IndexedDB. Hosting serves the application, verified browser libraries and blank PDFs. No analytics or student-data upload endpoint is included. Professor accounts and cross-device synchronization are not implemented.
 
@@ -62,3 +62,5 @@ The key upload control uses an accessible native file input with a custom visibl
 Backups now have dated filenames and are available in both modes. They preserve a single exam, its key/roster snapshot, original photos, processed results, pending queue and correct-answer display setting. A restored in-progress photo becomes pending; completed photos keep their results. Download a new backup after more work. Guest restore stays in memory, and adding photos continues the restored exam instead of creating a different one. Restoring in My workspace saves a separate exam and leaves existing exams intact. Guest sessions with photos must be backed up and ended before restoring another file. Backup/restore lock mutations while running.
 
 Browser recovery verification: downloaded a real guest ZIP with one completed and one pending sheet, ended the session, restored into a fresh guest session, finished the pending sheet, and added a third sheet without restarting the exam. Restoring the same archive into My workspace preserved the partial queue through reload and kept earlier exams in history.
+
+Print blank Grading Sheet now opens an in-app preview, keeping the current guest/saved session intact. A sticky toolbar supplies Back to grader, Print, Share and Download PDF. The print view uses two 300-dpi Letter images derived from the unchanged blank PDF, at 215.9 x 279.4 mm with no app controls on printed pages. Share sends the original PDF through the system file-sharing menu when supported; unsupported browsers show a download fallback. The preview code and images are included in offline caching and deployment. Physical printer output and native iPhone share/print dialogs still depend on the user’s browser and device.

@@ -1,11 +1,42 @@
-import {openDB,memoryDB,get,all,put,remove} from './db.js?v=1.8.0';
-import {automatic,parseKey,groups,importRoster,namedKey,readyStudents,extraAnswersForKey,selectedBonusKey} from './core.js?v=1.8.0';
-import {download,clearDownloads,zipFiles,csvExport,feedbackPDF,combinedPDF} from './exports.js?v=1.8.0';
-import {setupKeyImport} from './key-import.js?v=1.8.0';
+function setupSheetPreview(){
+const $=id=>document.getElementById(id),dialog=$('blankSheetDialog');
+let file=null,url=null,loading=null;
+const status=(message,error=false)=>{$('sheetActionStatus').textContent=message;$('sheetActionStatus').className=error?'error':'small';};
+async function prepare(){
+if(file&&url)return;if(loading)return loading;
+loading=(async()=>{
+const images=[...dialog.querySelectorAll('.blank-sheet-page img')];
+await Promise.all(images.map(img=>img.decode()));$('printBlank').disabled=false;
+try{const response=await fetch('./sheets/100-bonus.pdf');if(!response.ok)throw Error('PDF unavailable');file=new File([await response.blob()],'Blank_Grading_Sheet.pdf',{type:'application/pdf'});url=URL.createObjectURL(file);$('downloadBlank').href=url;$('shareBlank').disabled=false;}
+catch{status('The preview is ready. Download PDF needs an internet connection until offline files are ready.',true);}
+})();
+try{await loading;}catch{status('The sheet preview could not load. Reconnect and try again, or use Download PDF.',true);}finally{loading=null;}
+}
+$('sheet').onclick=e=>{e.preventDefault();status('Loading grading sheets…');dialog.showModal();prepare().then(()=>{if($('sheetActionStatus').textContent==='Loading grading sheets…')status('');});};
+$('backFromSheet').onclick=()=>dialog.close();
+dialog.addEventListener('close',()=>document.body.classList.remove('printing-sheet'));
+$('printBlank').onclick=()=>{if(typeof window.print!=='function'){status('Printing is unavailable here. Use Share or Download PDF instead.',true);return;}document.body.classList.add('printing-sheet');window.print();};
+window.addEventListener('beforeprint',()=>{if(dialog.open)document.body.classList.add('printing-sheet');});
+window.addEventListener('afterprint',()=>document.body.classList.remove('printing-sheet'));
+$('shareBlank').onclick=async()=>{
+if(!file)return;
+if(!navigator.canShare?.({files:[file]})||!navigator.share){status('Sharing is unavailable in this browser. Use Download PDF, then open the file to print or share.',true);return;}
+try{$('shareBlank').disabled=true;await navigator.share({files:[file],title:'Blank grading sheet'});status('');}
+catch(e){if(e.name!=='AbortError')status('Sharing could not open. Use Download PDF to save and print the sheet.',true);}
+finally{$('shareBlank').disabled=false;}
+};
+window.addEventListener('pagehide',()=>{if(url)URL.revokeObjectURL(url);url=null;file=null;loading=null;});
+}
+
+import {openDB,memoryDB,get,all,put,remove} from './db.js?v=1.8.1';
+import {automatic,parseKey,groups,importRoster,namedKey,readyStudents,extraAnswersForKey,selectedBonusKey} from './core.js?v=1.8.1';
+import {download,clearDownloads,zipFiles,csvExport,feedbackPDF,combinedPDF} from './exports.js?v=1.8.1';
+import {setupKeyImport} from './key-import.js?v=1.8.1';
 const $=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 const helpTitles={session:'Session information',print:'Print grading sheets',class:'Choose a class',key:'Answer key',capture:'Capture grading sheets',export:'Export results'};
 for(const button of document.querySelectorAll('[data-help]'))button.onclick=()=>{const topic=button.dataset.help;$('infoTitle').textContent=helpTitles[topic];for(const panel of $('infoDialog').querySelectorAll('[data-info]'))panel.hidden=panel.dataset.info!==topic;$('infoDialog').showModal();};
 $('closeInfo').onclick=()=>$('infoDialog').close();
+setupSheetPreview();
 let db,state={id:'app',rosters:[],batches:[],keys:[]},batch=null,photos=[],active=null,processing=false,rosterImporting=false,adding=false,paused=false,ready=false,keyBusy=false,keySaving=false,stream=null,retakeId=null,previewURL=null,deletedPhoto=null,activeKeyId='',keyExtraAnswers=['',''],mode=null,guestExported=false,exporting=false,opening=false,archiving=false;
 const worker=new Worker(new URL('./worker.js',import.meta.url));let pending=null;
 worker.onmessage=e=>{if(e.data.ready){ready=true;if(db)render();$('runtime').className='small';$('runtime').textContent='Ready to grade on this device.';return;}if(e.data.fatal){$('runtime').className='error';$('runtime').textContent='Reader could not load: '+e.data.fatal;return;}if(pending){const p=pending;pending=null;e.data.error?p.reject(Error(e.data.error)):p.resolve(e.data.result);}};
@@ -154,7 +185,7 @@ $('closeWorkspaceError').onclick=()=>$('workspaceErrorDialog').close();
 $('endSession').onclick=()=>{if(processing||adding||keyBusy||exporting||archiving)return;if(mode==='guest'&&($('key').value||photos.length)){$('endSessionMessage').textContent=guestExported?'End this guest session? Its temporary key, photos and grades will be cleared. Your downloaded files will remain.':'Download your results or a backup before leaving. Ending this guest session clears its temporary key, photos and grades.';$('endDialog').showModal();}else endSession();};
 $('keepSession').onclick=()=>$('endDialog').close();$('confirmEnd').onclick=endSession;
 function endSession(){
-if(processing||adding||keyBusy||exporting||archiving)return;closeCamera();$('infoDialog').close();$('endDialog').close();$('reviewDialog').close();$('keyDialog').close();clearDownloads();
+if(processing||adding||keyBusy||exporting||archiving)return;closeCamera();$('blankSheetDialog').close();$('infoDialog').close();$('endDialog').close();$('reviewDialog').close();$('keyDialog').close();clearDownloads();
 if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;$('preview').removeAttribute('src');
 if(db?.memory)for(const store of Object.values(db.memory))store.clear();else db?.close();db=null;mode=null;
 state={id:'app',rosters:[],batches:[],keys:[]};batch=null;photos=[];active=null;deletedPhoto=null;retakeId=null;activeKeyId='';keyExtraAnswers=['',''];guestExported=false;
@@ -163,4 +194,4 @@ for(const id of ['photoList','answerReview','keyChoices','summary','message','ke
 $('workspace').hidden=true;$('deviceStatus').hidden=true;$('landing').hidden=false;document.body.classList.remove('guest-mode');$('guestStart').focus();
 }
 window.addEventListener('beforeunload',e=>{if(mode==='guest'&&!guestExported&&($('key').value||photos.length)){e.preventDefault();e.returnValue='';}});
-(async()=>{try{if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.register('./sw.js?v=1.8.0',{updateViaCache:'none'});const check=()=>{const sw=registration.active||registration.waiting;sw?.postMessage({type:'CACHE_STATUS'});};navigator.serviceWorker.addEventListener('message',e=>{if(e.data.type==='OFFLINE_READY')$('offline').textContent='Offline access ready.';if(e.data.type==='OFFLINE_ERROR')$('offline').textContent='Offline files could not be saved. Keep internet available and retry later.';});check();registration.addEventListener('updatefound',()=>registration.installing?.addEventListener('statechange',check));}else $('offline').textContent='Offline installation is not available in this browser.';}catch(e){$('offline').textContent='Offline access is unavailable. Keep internet available.';}})();
+(async()=>{try{if('serviceWorker'in navigator){const registration=await navigator.serviceWorker.register('./sw.js?v=1.8.1',{updateViaCache:'none'});const check=()=>{const sw=registration.active||registration.waiting;sw?.postMessage({type:'CACHE_STATUS'});};navigator.serviceWorker.addEventListener('message',e=>{if(e.data.type==='OFFLINE_READY')$('offline').textContent='Offline access ready.';if(e.data.type==='OFFLINE_ERROR')$('offline').textContent='Offline files could not be saved. Keep internet available and retry later.';});check();registration.addEventListener('updatefound',()=>registration.installing?.addEventListener('statechange',check));}else $('offline').textContent='Offline installation is not available in this browser.';}catch(e){$('offline').textContent='Offline access is unavailable. Keep internet available.';}})();

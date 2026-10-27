@@ -1,4 +1,4 @@
-import {detectedExamSettings,keyFromSheets,reviewedKey} from './core.js?v=1.8.0';
+import {detectedExamSettings,keyFromSheets,reviewedKey} from './core.js?v=1.8.1';
 
 export function setupKeyImport({read,optimize,isGuest=()=>false,isReady,isProcessing,setBusy,message,onSave,onCancel}){
 const $=id=>document.getElementById(id);let draft=null,saving=false;
