@@ -72,3 +72,6 @@ Version 1.9.1 adds eight left-to-right ID digit columns with writing boxes and 0
 
 
 Version 1.9.1 keeps the blank-sheet Download PDF link on its permanent same-origin PDF address. It no longer replaces the link with a temporary object URL or revokes it when Safari leaves the page. Sharing still uses the prepared PDF file.
+
+
+Version 1.10.0 adds roster email import and one-button individual graded-sheet submission, with one confirmation. The email service requires a separately deployed, configured sender and authorized device connection; no real email is enabled by default. See mail-service/README.md. Tests: 46 passing; synthetic browser confirmation/cancel/repeat checks passed. No real email was sent.
